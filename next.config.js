@@ -10,11 +10,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // basePath: '/dynamic',
+ // basePath: '/dynamic',
   swcMinify: true,
-  trailingSlash: true, // Ensures static HTML generation works for all routes
-  output: 'export',    // Export to static HTML files
-  distDir: 'build',    // Output the build to the 'build' directory
+  trailingSlash: true, 
+  output: 'standalone',
+  distDir: 'build',    
 };
 
 module.exports = nextConfig;

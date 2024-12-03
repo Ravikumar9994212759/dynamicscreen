@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material"; // Add more icons if needed
 import Link from "next/link";
-import styles from "./Index.module.css";
+import styles from "./index.module.css";
 
 export const getStaticProps = async () => {
   try {
