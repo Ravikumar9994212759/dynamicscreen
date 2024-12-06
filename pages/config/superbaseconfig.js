@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_RVSUPERBASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_RVSUPERBASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key:', supabaseKey);
