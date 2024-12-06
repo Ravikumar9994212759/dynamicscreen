@@ -3,6 +3,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import supabase from "./config/superbaseconfig";
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
