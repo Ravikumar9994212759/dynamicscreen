@@ -6,10 +6,9 @@ import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
 export const getStaticProps = async () => {
-  console.log("[Server] Starting getStaticProps execution...");
+  console.log("[Server] Fetching initial data with getStaticProps...");
 
   try {
-    // Fetch data from Supabase
     const { data, error } = await supabase
       .from('inventoryMaster')
       .select(`
@@ -20,24 +19,22 @@ export const getStaticProps = async () => {
         nstatus
       `)
       .order('nprimarykey', { ascending: true });
-      console.log('Fetched data from Supabase:', data);
 
-    // Log the data or error from Supabase
     if (error) {
-      console.error("[Server] Error fetching data from Supabase:", error.message);
+      console.error("[Server] Supabase Error:", error.message);
       return {
         props: { initialData: [], error: error.message },
-        revalidate: 5,
+        revalidate: 5, // Revalidate every 5 seconds
       };
     }
 
-    console.log("[Server] Data fetched from Supabase values:", JSON.stringify(data, null, 2));
+    console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
     return {
       props: { initialData: data || [], error: null },
       revalidate: 5,
     };
   } catch (err) {
-    console.error("[Server] Unexpected error during getStaticProps execution:", err.message);
+    console.error("[Server] Unexpected error in getStaticProps:", err.message);
     return {
       props: { initialData: [], error: err.message },
       revalidate: 5,
@@ -46,8 +43,58 @@ export const getStaticProps = async () => {
 };
 
 const Index = ({ initialData, error: initialError }) => {
-  const [users, setUsers] = useState(initialData);
+  const [users, setUsers] = useState(initialData); // Static data from ISR
   const [error, setError] = useState(initialError);
+
+  const fetchLatestData = async () => {
+    try {
+      console.log("[Client] Fetching latest data from Supabase...");
+      const { data, error } = await supabase
+        .from('inventoryMaster')
+        .select(`
+          nprimarykey,
+          screename,
+          jsondata->menuUrl AS menuURL,
+          jsondata->parentMenuId AS parentMenuID,
+          nstatus
+        `)
+        .order('nprimarykey', { ascending: true });
+
+      if (error) {
+        console.error("[Client] Supabase Fetch Error:", error.message);
+        setError(error.message);
+      } else {
+        console.log("[Client] Latest data fetched:", JSON.stringify(data, null, 2));
+        setUsers(data || []);
+      }
+    } catch (err) {
+      console.error("[Client] Unexpected error during fetch:", err.message);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch the latest data on the client side after page load
+    fetchLatestData();
+
+    // Set up a real-time subscription
+    console.log("[Client] Setting up real-time subscription...");
+    const subscription = supabase
+      .channel('realtime:inventoryMaster')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventoryMaster' },
+        (payload) => {
+          console.log("[Client] Real-time data update received:", JSON.stringify(payload, null, 2));
+          fetchLatestData(); // Re-fetch data when real-time updates are received
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("[Client] Cleaning up real-time subscription...");
+      supabase.removeChannel(subscription);
+    };
+  }, []);
 
   const getIcon = (screename) => {
     const dynamicIconMapping = {
@@ -60,46 +107,6 @@ const Index = ({ initialData, error: initialError }) => {
     };
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
-
-  useEffect(() => {
-    console.log("[Client] Subscribing to real-time updates...");
-    const subscription = supabase
-      .channel('realtime:inventoryMaster')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'inventoryMaster' },
-        (payload) => {
-          console.log("[Client] Real-time data update received:", JSON.stringify(payload, null, 2));
-
-          // Re-fetch data to update the UI
-          supabase
-            .from('inventoryMaster')
-            .select(`
-              nprimarykey,
-              screename,
-              jsondata->menuUrl AS menuURL,
-              jsondata->parentMenuId AS parentMenuID,
-              nstatus
-            `)
-            .order('nprimarykey', { ascending: true })
-            .then(({ data, error }) => {
-              if (error) {
-                console.error("[Client] Error fetching updated data:", error.message);
-                setError(error.message);
-              } else {
-                console.log("[Client] Updated data fetched:", JSON.stringify(data, null, 2));
-                setUsers(data || []);
-              }
-            });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log("[Client] Cleaning up subscription...");
-      supabase.removeChannel(subscription);
-    };
-  }, []);
 
   return (
     <div className={styles.container}>
