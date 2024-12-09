@@ -31,7 +31,7 @@ export const getStaticProps = async () => {
       };
     }
 
-    console.log("[Server] Data fetched from Supabase:", JSON.stringify(data, null, 2));
+    console.log("[Server] Data fetched from Supabase values:", JSON.stringify(data, null, 2));
     return {
       props: { initialData: data || [], error: null },
       revalidate: 5,
