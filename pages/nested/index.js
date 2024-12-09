@@ -5,6 +5,7 @@ import Link from "next/link";
 import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
+// getStaticProps for initial data fetching
 export const getStaticProps = async () => {
   console.log("[Server] Fetching initial data with getStaticProps...");
 
@@ -24,20 +25,20 @@ export const getStaticProps = async () => {
       console.error("[Server] Supabase Error:", error.message);
       return {
         props: { initialData: [], error: error.message },
-        revalidate: 5, // Revalidate every 5 seconds
+        revalidate: 1, // Revalidate every 5 seconds
       };
     }
 
     console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
     return {
       props: { initialData: data || [], error: null },
-      revalidate: 5,
+      revalidate: 1, // Revalidate every 5 seconds
     };
   } catch (err) {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
     return {
       props: { initialData: [], error: err.message },
-      revalidate: 1,
+      revalidate: 1, // Revalidate every 1 second in case of error
     };
   }
 };
@@ -46,37 +47,53 @@ const Index = ({ initialData, error: initialError }) => {
   const [users, setUsers] = useState(initialData); // Static data from ISR
   const [error, setError] = useState(initialError);
 
-  const fetchLatestData = async () => {
+  // Function to trigger revalidation of a page
+  const triggerRevalidation = async (slug) => {
     try {
-      console.log("[Client] Fetching latest data from Supabase...");
-      const { data, error } = await supabase
-        .from('inventoryMaster')
-        .select(`
-          nprimarykey,
-          screename,
-          jsondata->menuUrl AS menuURL,
-          jsondata->parentMenuId AS parentMenuID,
-          nstatus
-        `)
-        .order('nprimarykey', { ascending: true });
+      const res = await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug }),  // Send the slug (like nprimarykey) in the request
+      });
 
-      if (error) {
-        console.error("[Client] Supabase Fetch Error:", error.message);
-        setError(error.message);
-      } else {
-        console.log("[Client] Latest data fetched:", JSON.stringify(data, null, 2));
-        setUsers(data || []);
-      }
+      const data = await res.json();
+      console.log(data.message);  // Log the success message from the API
     } catch (err) {
-      console.error("[Client] Unexpected error during fetch:", err.message);
+      console.error('Error triggering revalidation:', err);
     }
   };
 
+  // Real-time updates
   useEffect(() => {
-    // Fetch the latest data on the client side after page load
-    fetchLatestData();
+    const fetchLatestData = async () => {
+      try {
+        console.log("[Client] Fetching latest data from Supabase...");
+        const { data, error } = await supabase
+          .from('inventoryMaster')
+          .select(`
+            nprimarykey,
+            screename,
+            jsondata->menuUrl AS menuURL,
+            jsondata->parentMenuId AS parentMenuID,
+            nstatus
+          `)
+          .order('nprimarykey', { ascending: true });
 
-    // Set up a real-time subscription
+        if (error) {
+          console.error("[Client] Supabase Fetch Error:", error.message);
+          setError(error.message);
+        } else {
+          console.log("[Client] Latest data fetched:", JSON.stringify(data, null, 2));
+          setUsers(data || []);
+        }
+      } catch (err) {
+        console.error("[Client] Unexpected error during fetch:", err.message);
+      }
+    };
+
+    // Set up a real-time subscription to listen for changes
     console.log("[Client] Setting up real-time subscription...");
     const subscription = supabase
       .channel('realtime:inventoryMaster')
@@ -85,7 +102,12 @@ const Index = ({ initialData, error: initialError }) => {
         { event: '*', schema: 'public', table: 'inventoryMaster' },
         (payload) => {
           console.log("[Client] Real-time data update received:", JSON.stringify(payload, null, 2));
-          fetchLatestData(); // Re-fetch data when real-time updates are received
+
+          // When data is updated, trigger revalidation for the relevant page
+          const slug = payload.new?.nprimarykey;  // Get the primary key of the updated record
+          if (slug) {
+            triggerRevalidation(slug);  // Call the API to revalidate the page
+          }
         }
       )
       .subscribe();
@@ -120,11 +142,11 @@ const Index = ({ initialData, error: initialError }) => {
       )}
       <Grid container spacing={3} justifyContent="center">
         {users && users.length > 0 ? (
-          users.map((user) => (
-            user.nprimarykey && (
+          users.map((user) =>
+            user.nprimarykey ? (
               <Grid item key={user.nprimarykey}>
                 <Link
-                  href={`nested/${user.nprimarykey}`}
+                  href={`nested/?slug=${user.nprimarykey}`}  // Change to use query parameter
                   style={{ textDecoration: "none" }}
                   aria-label={`Go to details for ${user.screename || "Unknown Screen"}`}
                 >
@@ -137,8 +159,8 @@ const Index = ({ initialData, error: initialError }) => {
                   </Card>
                 </Link>
               </Grid>
-            )
-          ))
+            ) : null
+          )
         ) : (
           <Typography align="center" variant="h6" color="textSecondary">
             No data available. Please try again later.
