@@ -18,6 +18,7 @@ export const getStaticProps = async () => {
         nstatus
       `)
       .order('nprimarykey', { ascending: true });
+      console.log('Fetched data from Supabase:', data);
 
     // Check if there is an error
     if (error) {
