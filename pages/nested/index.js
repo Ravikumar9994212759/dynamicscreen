@@ -3,7 +3,7 @@ import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material";
 import Link from "next/link";
 import styles from "./index.module.css";
-import supabase from "../config/superbaseconfig";
+import supabase from "../../lib/supabase";
 
 export const getStaticProps = async () => {
   try {
