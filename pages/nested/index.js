@@ -37,7 +37,7 @@ export const getStaticProps = async () => {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
     return {
       props: { initialData: [], error: err.message },
-      revalidate: 5,
+      revalidate: 1,
     };
   }
 };
