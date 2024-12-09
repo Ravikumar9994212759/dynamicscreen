@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material";
 import Link from "next/link";
@@ -6,6 +6,8 @@ import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
 export const getStaticProps = async () => {
+  console.log("[Server] Starting getStaticProps execution...");
+
   try {
     // Fetch data from Supabase
     const { data, error } = await supabase
@@ -19,24 +21,33 @@ export const getStaticProps = async () => {
       `)
       .order('nprimarykey', { ascending: true });
 
-    // Check if there is an error
+    // Log the data or error from Supabase
     if (error) {
-      console.error("Error fetching data from Supabase:", error.message);
-      return { props: { users: [], error: error.message } };  // Return error message in props if error occurs
+      console.error("[Server] Error fetching data from Supabase:", error.message);
+      return {
+        props: { initialData: [], error: error.message },
+        revalidate: 5,
+      };
     }
 
-    // If no error, return the data
+    console.log("[Server] Data fetched from Supabase:", JSON.stringify(data, null, 2));
     return {
-      props: { users: data || [], error: null },  // Return the fetched data and no error
-      revalidate: 1,  // Revalidate every 1 second if the data changes
+      props: { initialData: data || [], error: null },
+      revalidate: 5,
     };
-  } catch (error) {
-    console.error("Error with Supabase request:", error.message);
-    return { props: { users: [], error: error.message } };  // Return error message if there's an exception
+  } catch (err) {
+    console.error("[Server] Unexpected error during getStaticProps execution:", err.message);
+    return {
+      props: { initialData: [], error: err.message },
+      revalidate: 5,
+    };
   }
 };
 
-const Index = ({ users, error }) => {
+const Index = ({ initialData, error: initialError }) => {
+  const [users, setUsers] = useState(initialData);
+  const [error, setError] = useState(initialError);
+
   const getIcon = (screename) => {
     const dynamicIconMapping = {
       "Product Type": <Category className={styles.icon} />,
@@ -46,9 +57,48 @@ const Index = ({ users, error }) => {
       "Settings": <Settings className={styles.icon} />,
       "Work": <Work className={styles.icon} />,
     };
-
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
+
+  useEffect(() => {
+    console.log("[Client] Subscribing to real-time updates...");
+    const subscription = supabase
+      .channel('realtime:inventoryMaster')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventoryMaster' },
+        (payload) => {
+          console.log("[Client] Real-time data update received:", JSON.stringify(payload, null, 2));
+
+          // Re-fetch data to update the UI
+          supabase
+            .from('inventoryMaster')
+            .select(`
+              nprimarykey,
+              screename,
+              jsondata->menuUrl AS menuURL,
+              jsondata->parentMenuId AS parentMenuID,
+              nstatus
+            `)
+            .order('nprimarykey', { ascending: true })
+            .then(({ data, error }) => {
+              if (error) {
+                console.error("[Client] Error fetching updated data:", error.message);
+                setError(error.message);
+              } else {
+                console.log("[Client] Updated data fetched:", JSON.stringify(data, null, 2));
+                setUsers(data || []);
+              }
+            });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("[Client] Cleaning up subscription...");
+      supabase.removeChannel(subscription);
+    };
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -72,7 +122,7 @@ const Index = ({ users, error }) => {
                 >
                   <Card className={styles.card}>
                     <CardContent>
-                      {getIcon(user.screename)} 
+                      {getIcon(user.screename)}
                       <Typography className={styles.text}>{user.screename}</Typography>
                       <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
                     </CardContent>
