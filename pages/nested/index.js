@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material";
 import Link from "next/link";
@@ -53,7 +53,17 @@ const Index = ({ initialData, error: initialError }) => {
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
 
+  // This will allow us to update users if there are any changes
+  const handleUpdateUser = (updatedUser) => {
+    const updatedUsers = users.map((user) =>
+      user.nprimarykey === updatedUser.nprimarykey ? updatedUser : user
+    );
+    setUsers(updatedUsers);
+    console.log(`[Client] Updated user: ${updatedUser.nprimarykey}`);
+  };
+
   if (error) {
+    console.error("[Client] Error:", error);
     return <div>Error: {error}</div>;
   }
 
