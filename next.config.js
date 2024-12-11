@@ -13,7 +13,7 @@ module.exports = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=60, stale-while-revalidate=59',  // Cache but revalidate in the background
+            value: 'public, max-age=0,must-revalidate',  // Cache but revalidate in the background
           },
         ],
       },

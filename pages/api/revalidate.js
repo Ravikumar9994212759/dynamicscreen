@@ -1,3 +1,4 @@
+// pages/api/revalidate.js
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { slug } = req.body;
@@ -7,8 +8,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Ensure the URL is properly formatted with a trailing slash
-      const revalidatePath = `/nested/${slug.replace(/\/$/, '')}/`; // Remove any extra slashes
+      const revalidatePath = `/nested/${slug.replace(/\/$/, '')}/`;  // Ensure trailing slash
       console.log(`Revalidating path: ${revalidatePath}`);
       
       // Trigger revalidation for the page
