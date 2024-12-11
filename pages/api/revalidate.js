@@ -1,19 +1,17 @@
-// pages/api/revalidate.js
-
+// /pages/api/revalidate.js
 export default async function handler(req, res) {
     if (req.method === 'POST') {
-      const { slug } = req.body; // Get the 'slug' (which is the primary key, 'nprimarykey')
+      const { slug } = req.body;  // The dynamic slug (nprimarykey)
   
       if (!slug) {
         return res.status(400).json({ message: 'Slug is required' });
       }
   
       try {
-        // Revalidate the page for /nested/[slug] URL
-        const revalidatePath = `/nested/?slug=${slug}`;
+        const revalidatePath = `/nested/${slug}/`;  // Ensure single trailing slash
         console.log(`Revalidating path: ${revalidatePath}`);
   
-        // Trigger revalidation for the page associated with the slug
+        // Trigger revalidation for the dynamic page
         await res.revalidate(revalidatePath);
   
         return res.json({ message: `Revalidated ${revalidatePath}` });

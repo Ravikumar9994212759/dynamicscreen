@@ -25,14 +25,14 @@ export const getStaticProps = async () => {
       console.error("[Server] Supabase Error:", error.message);
       return {
         props: { initialData: [], error: error.message },
-        revalidate: 1, // Revalidate every 5 seconds
+        revalidate: 1, // Revalidate every 1 second for any updates
       };
     }
 
     console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
     return {
       props: { initialData: data || [], error: null },
-      revalidate: 1, // Revalidate every 5 seconds
+      revalidate: 1, // Revalidate every 1 second
     };
   } catch (err) {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
@@ -50,16 +50,21 @@ const Index = ({ initialData, error: initialError }) => {
   // Function to trigger revalidation of a page
   const triggerRevalidation = async (slug) => {
     try {
+      console.log(`Triggering revalidation for slug: ${slug}`);
       const res = await fetch('/api/revalidate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ slug }),  // Send the slug (like nprimarykey) in the request
+        body: JSON.stringify({ slug: `${slug}` }),  // Ensure slug is correctly formatted
       });
 
-      const data = await res.json();
-      console.log(data.message);  // Log the success message from the API
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Revalidation success:', data);
+      } else {
+        console.error('Revalidation failed:', res.statusText);
+      }
     } catch (err) {
       console.error('Error triggering revalidation:', err);
     }
@@ -106,7 +111,7 @@ const Index = ({ initialData, error: initialError }) => {
           // When data is updated, trigger revalidation for the relevant page
           const slug = payload.new?.nprimarykey;  // Get the primary key of the updated record
           if (slug) {
-            triggerRevalidation(slug);  // Call the API to revalidate the page
+            triggerRevalidation(`${slug}/`);  // Ensure trailing slash
           }
         }
       )
@@ -146,7 +151,7 @@ const Index = ({ initialData, error: initialError }) => {
             user.nprimarykey ? (
               <Grid item key={user.nprimarykey}>
                 <Link
-                  href={`nested/?slug=${user.nprimarykey}`}  // Change to use query parameter
+                  href={`/nested/${user.nprimarykey}/`}  // Ensure trailing slash
                   style={{ textDecoration: "none" }}
                   aria-label={`Go to details for ${user.screename || "Unknown Screen"}`}
                 >
