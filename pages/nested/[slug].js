@@ -4,14 +4,12 @@ import { Typography, Card, CardContent, Grid } from '@mui/material';
 
 // Generate static paths at build time
 export const getStaticPaths = async () => {
-  console.log("[Server] Fetching paths with getStaticPaths...");
-
   const { data, error } = await supabase
     .from('inventoryMaster')
     .select('nprimarykey');
 
   if (error) {
-    console.error("[Server] Error fetching paths:", error);
+    console.error('Error fetching paths:', error);
     return { paths: [], fallback: 'blocking' };
   }
 
@@ -20,15 +18,12 @@ export const getStaticPaths = async () => {
     params: { slug: item.nprimarykey.toString() + '/' }, // Ensuring trailing slash
   }));
 
-  console.log("[Server] Generated paths:", JSON.stringify(paths, null, 2));
-
   return { paths, fallback: 'blocking' };
 };
 
 // Fetch specific data for each path
 export const getStaticProps = async ({ params }) => {
   const { slug } = params;
-  console.log("[Server] Fetching data for slug:", slug);
 
   const { data, error } = await supabase
     .from('inventoryMaster')
@@ -37,15 +32,13 @@ export const getStaticProps = async ({ params }) => {
     .single();
 
   if (error) {
-    console.error("[Server] Error fetching data for slug:", error);
+    console.error('Error fetching data:', error);
     return { notFound: true };
   }
 
-  console.log("[Server] Data fetched for slug:", JSON.stringify(data, null, 2));
-
   return {
     props: { item: data },
-    revalidate: 1, // Revalidate every 1 second
+    revalidate: 1, // Revalidate every 1 seconds
   };
 };
 
@@ -53,11 +46,8 @@ const SlugPage = ({ item }) => {
   const router = useRouter();
 
   if (router.isFallback) {
-    console.log("[Client] Fallback page loading...");
     return <div>Loading...</div>;
   }
-
-  console.log("[Client] Rendering item for slug:", item.nprimarykey);
 
   return (
     <Grid container spacing={3} justifyContent="center">
