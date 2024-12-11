@@ -41,7 +41,7 @@ const Index = ({ initialData, error: initialError }) => {
   const [users, setUsers] = useState(initialData);  // Static data from ISR
   const [error, setError] = useState(initialError);
 
-  // Polling mechanism to refresh data every 10 seconds
+  // Polling mechanism to refresh data every 10 seconds (client-side)
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -78,8 +78,9 @@ const Index = ({ initialData, error: initialError }) => {
       })
       .subscribe();
 
+    // Clean up the subscription using unsubscribe
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();  // Unsubscribing from the channel correctly
     };
   }, []);
 
