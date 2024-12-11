@@ -1,4 +1,3 @@
-// /pages/nested/[slug].js
 import { useRouter } from 'next/router';
 import supabase from '../../lib/supabase';
 import { Typography, Card, CardContent, Grid } from '@mui/material';
@@ -16,7 +15,7 @@ export const getStaticPaths = async () => {
 
   // Generate paths based on the primary key (nprimarykey)
   const paths = data.map(item => ({
-    params: { slug: item.nprimarykey.toString() },
+    params: { slug: item.nprimarykey.toString() + '/' }, // Ensuring trailing slash
   }));
 
   return { paths, fallback: 'blocking' };
@@ -29,7 +28,7 @@ export const getStaticProps = async ({ params }) => {
   const { data, error } = await supabase
     .from('inventoryMaster')
     .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL, jsondata->parentMenuId AS parentMenuID, nstatus`)
-    .eq('nprimarykey', slug)
+    .eq('nprimarykey', slug.replace(/\/$/, ''))  // Remove extra slash if exists
     .single();
 
   if (error) {
@@ -39,7 +38,7 @@ export const getStaticProps = async ({ params }) => {
 
   return {
     props: { item: data },
-    revalidate: 1, // Revalidate every 1 second
+    revalidate: 1, // Revalidate every 1 seconds
   };
 };
 

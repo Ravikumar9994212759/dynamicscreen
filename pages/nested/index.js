@@ -1,5 +1,4 @@
-// /pages/nested/index.js
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material";
 import Link from "next/link";
@@ -42,30 +41,6 @@ const Index = ({ initialData, error: initialError }) => {
   const [users, setUsers] = useState(initialData);  // Static data from ISR
   const [error, setError] = useState(initialError);
 
-  useEffect(() => {
-    const fetchLatestData = async () => {
-      try {
-        console.log("[Client] Fetching latest data from Supabase...");
-        const { data, error } = await supabase
-          .from('inventoryMaster')
-          .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL, jsondata->parentMenuId AS parentMenuID, nstatus`)
-          .order('nprimarykey', { ascending: true });
-
-        if (error) {
-          console.error("[Client] Supabase Fetch Error:", error.message);
-          setError(error.message);
-        } else {
-          console.log("[Client] Latest data fetched:", JSON.stringify(data, null, 2));
-          setUsers(data || []);
-        }
-      } catch (err) {
-        console.error("[Client] Unexpected error during fetch:", err.message);
-      }
-    };
-
-    fetchLatestData();
-  }, []);
-
   const getIcon = (screename) => {
     const dynamicIconMapping = {
       "Product Type": <Category className={styles.icon} />,
@@ -78,26 +53,21 @@ const Index = ({ initialData, error: initialError }) => {
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
 
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <div className={styles.container}>
       <Typography variant="h4" align="left" gutterBottom>
         Invoice
       </Typography>
-      {error && (
-        <Typography variant="h6" color="error" align="center">
-          {`Error fetching data: ${error}`}
-        </Typography>
-      )}
       <Grid container spacing={3} justifyContent="center">
         {users && users.length > 0 ? (
           users.map((user) =>
             user.nprimarykey ? (
               <Grid item key={user.nprimarykey}>
-                <Link
-                  href={`/nested/${user.nprimarykey}/`}  // Ensure trailing slash
-                  style={{ textDecoration: "none" }}
-                  aria-label={`Go to details for ${user.screename || "Unknown Screen"}`}
-                >
+                <Link href={`/nested/${user.nprimarykey}/`} passHref>
                   <Card className={styles.card}>
                     <CardContent>
                       {getIcon(user.screename)}
