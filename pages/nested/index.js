@@ -5,14 +5,14 @@ import Link from "next/link";
 import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
-// Use `getStaticProps` with ISR to fetch the data and revalidate every 60 seconds
+// Fetch initial data using getStaticProps
 export const getStaticProps = async () => {
   console.log("[Server] Fetching initial data with getStaticProps...");
 
   try {
     const { data, error } = await supabase
       .from('inventoryMaster')
-      .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL, jsondata->parentMenuId AS parentMenuID, nstatus`)
+      .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL`)
       .order('nprimarykey', { ascending: true });
 
     if (error) {
@@ -22,24 +22,18 @@ export const getStaticProps = async () => {
           initialData: [], 
           error: error.message 
         },
-        revalidate: 60,  // Revalidate every 60 seconds
+        revalidate: 60,
       };
     }
 
-    // Log the data with screename and nprimarykey
-    console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
-    if (data) {
-      data.forEach(item => {
-        console.log(`[Server] Item: screename = ${item.screename}, nprimarykey = ${item.nprimarykey}`);
-      });
-    }
+    console.log("[Server] Initial data fetched:", data);
 
     return {
       props: { 
         initialData: data || [], 
         error: null 
       },
-      revalidate: 60,  // Revalidate every 60 seconds
+      revalidate: 60,
     };
   } catch (err) {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
@@ -48,57 +42,15 @@ export const getStaticProps = async () => {
         initialData: [], 
         error: err.message 
       },
-      revalidate: 60,  // Revalidate every 60 seconds in case of error
+      revalidate: 60,
     };
   }
 };
 
-const Index = ({ initialData, error: initialError }) => {
-  const [users, setUsers] = useState(initialData);  // Static data from ISR
-  const [error, setError] = useState(initialError);
-
-  // Polling mechanism to refresh data every 10 seconds (client-side)
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('inventoryMaster')
-          .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL, jsondata->parentMenuId AS parentMenuID, nstatus`)
-          .order('nprimarykey', { ascending: true });
-
-        if (error) {
-          console.error("Error fetching data:", error.message);
-        } else {
-          setUsers(data);
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching data:", err.message);
-      }
-    }, 10000); // Poll every 10 seconds
-
-    // Cleanup the interval when the component is unmounted
-    return () => clearInterval(interval);
-  }, []);
-
-  // Real-time update mechanism (using Supabase's subscription)
-  useEffect(() => {
-    const channel = supabase
-      .channel('inventoryMaster')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'inventoryMaster' }, (payload) => {
-        console.log("Database updated:", payload);
-        setUsers((prevUsers) =>
-          prevUsers.map(user =>
-            user.nprimarykey === payload.new.nprimarykey ? payload.new : user
-          )
-        );
-      })
-      .subscribe();
-
-    // Clean up the subscription using unsubscribe
-    return () => {
-      channel.unsubscribe();  // Unsubscribing from the channel correctly
-    };
-  }, []);
+// UserItem component for individual user rendering
+const UserItem = React.memo(({ user }) => {
+  // Log rendering of each item only if it has changed
+  console.log(`[Client] Rendering Item: screename = ${user.screename}, nprimarykey = ${user.nprimarykey}`);
 
   const getIcon = (screename) => {
     const dynamicIconMapping = {
@@ -111,6 +63,52 @@ const Index = ({ initialData, error: initialError }) => {
     };
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
+
+  return (
+    <Grid item key={user.nprimarykey}>
+      <Link href={`/nested/${user.nprimarykey}/`} passHref>
+        <Card className={styles.card}>
+          <CardContent>
+            {getIcon(user.screename)}
+            <Typography className={styles.text}>{user.screename}</Typography>
+            <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
+          </CardContent>
+        </Card>
+      </Link>
+    </Grid>
+  );
+});
+
+const Index = ({ initialData, error: initialError }) => {
+  const [users, setUsers] = useState(initialData);
+  const [error, setError] = useState(initialError);
+
+  useEffect(() => {
+    // Real-time subscription for 'UPDATE' events in 'inventoryMaster'
+    const channel = supabase
+      .channel('inventoryMaster')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'inventoryMaster' }, (payload) => {
+        console.log(`[Client] Data updated: screename = ${payload.new.screename}, nprimarykey = ${payload.new.nprimarykey}`);
+
+        // Update only the modified record based on `nprimarykey`
+        setUsers((prevUsers) => {
+          const updatedUsers = prevUsers.map((user) =>
+            user.nprimarykey === payload.new.nprimarykey ? { ...user, ...payload.new } : user
+          );
+
+          // Log the updated users array
+          console.log("[Client] Updated users array:", updatedUsers);
+          
+          return updatedUsers;
+        });
+      })
+      .subscribe();
+
+    // Clean up the subscription on component unmount
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
 
   // Handle empty users data gracefully
   if (!users || users.length === 0) {
@@ -140,24 +138,10 @@ const Index = ({ initialData, error: initialError }) => {
         Invoice
       </Typography>
       <Grid container spacing={3} justifyContent="center">
-        {users.map((user) => {
-          // Log each user's nprimarykey and screename
-          console.log(`[Client] Rendering Item: screename = ${user.screename}, nprimarykey = ${user.nprimarykey}`);
-          
-          return user.nprimarykey ? (
-            <Grid item key={user.nprimarykey}>
-              <Link href={`/nested/${user.nprimarykey}/`} passHref>
-                <Card className={styles.card}>
-                  <CardContent>
-                    {getIcon(user.screename)}
-                    <Typography className={styles.text}>{user.screename}</Typography>
-                    <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
-                  </CardContent>
-                </Card>
-              </Link>
-            </Grid>
-          ) : null;
-        })}
+        {/* Render only the updated users */}
+        {users.map((user) => (
+          <UserItem key={user.nprimarykey} user={user} />
+        ))}
       </Grid>
     </div>
   );
