@@ -79,6 +79,9 @@ const UserItem = React.memo(({ user }) => {
   );
 });
 
+// Set a display name for debugging purposes
+UserItem.displayName = "UserItem";
+
 const Index = ({ initialData, error: initialError }) => {
   const [users, setUsers] = useState(initialData);
   const [error, setError] = useState(initialError);
@@ -108,7 +111,7 @@ const Index = ({ initialData, error: initialError }) => {
     return () => {
       channel.unsubscribe();
     };
-  }, []);
+  }, []); // Ensure all necessary dependencies are included
 
   // Handle empty users data gracefully
   if (!users || users.length === 0) {
