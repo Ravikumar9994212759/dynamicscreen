@@ -22,7 +22,7 @@ export const getStaticProps = async () => {
           initialData: [], 
           error: error.message 
         },
-        revalidate: 60,
+        revalidate: 60, // Regenerate page every 60 seconds
       };
     }
 
@@ -33,7 +33,7 @@ export const getStaticProps = async () => {
         initialData: data || [], 
         error: null 
       },
-      revalidate: 60,
+      revalidate: 60, // Regenerate page every 60 seconds
     };
   } catch (err) {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
@@ -42,14 +42,12 @@ export const getStaticProps = async () => {
         initialData: [], 
         error: err.message 
       },
-      revalidate: 60,
+      revalidate: 60, // Regenerate page every 60 seconds
     };
   }
 };
 
-// UserItem component for individual user rendering
 const UserItem = React.memo(({ user }) => {
-  // Log rendering of each item only if it has changed
   console.log(`[Client] Rendering Item: screename = ${user.screename}, nprimarykey = ${user.nprimarykey}`);
 
   const getIcon = (screename) => {
@@ -87,7 +85,11 @@ const Index = ({ initialData, error: initialError }) => {
   const [error, setError] = useState(initialError);
 
   useEffect(() => {
-    // Real-time subscription for 'UPDATE' events in 'inventoryMaster'
+    // Log the users state to check for unnecessary updates
+    console.log("[Client] users state changed", users);
+  }, [users]); // Logs when the `users` state changes
+
+  useEffect(() => {
     const channel = supabase
       .channel('inventoryMaster')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'inventoryMaster' }, (payload) => {
@@ -99,19 +101,42 @@ const Index = ({ initialData, error: initialError }) => {
             user.nprimarykey === payload.new.nprimarykey ? { ...user, ...payload.new } : user
           );
 
-          // Log the updated users array
-          console.log("[Client] Updated users array:", updatedUsers);
-          
-          return updatedUsers;
+          // Only update if the data has actually changed
+          if (JSON.stringify(updatedUsers) !== JSON.stringify(prevUsers)) {
+            console.log("[Client] Updated users array:", updatedUsers);
+            return updatedUsers;
+          }
+
+          return prevUsers; // No change, return the old state
         });
       })
       .subscribe();
 
     // Clean up the subscription on component unmount
     return () => {
+      console.log("[Client] Unsubscribing from Supabase channel.");
       channel.unsubscribe();
     };
-  }, []); // Ensure all necessary dependencies are included
+  }, []); // Empty dependency ensures that subscription happens only once when the component mounts
+
+  // Optional: Periodically refresh the users data every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const { data, error } = await supabase
+        .from('inventoryMaster')
+        .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL`)
+        .order('nprimarykey', { ascending: true });
+
+      if (error) {
+        console.error("[Client] Error fetching new data:", error.message);
+        return;
+      }
+
+      setUsers(data);
+    }, 60000); // Refresh data every 60 seconds
+
+    return () => clearInterval(interval); // Clean up the interval on component unmount
+  }, []);
 
   // Handle empty users data gracefully
   if (!users || users.length === 0) {
