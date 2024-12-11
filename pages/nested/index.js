@@ -77,7 +77,6 @@ const UserItem = React.memo(({ user }) => {
   );
 });
 
-// Set a display name for debugging purposes
 UserItem.displayName = "UserItem";
 
 const Index = ({ initialData, error: initialError }) => {
@@ -138,7 +137,6 @@ const Index = ({ initialData, error: initialError }) => {
     return () => clearInterval(interval); // Clean up the interval on component unmount
   }, []);
 
-  // Handle empty users data gracefully
   if (!users || users.length === 0) {
     return (
       <div className={styles.container}>
@@ -149,7 +147,6 @@ const Index = ({ initialData, error: initialError }) => {
     );
   }
 
-  // If there's an error fetching the data
   if (error) {
     return (
       <div className={styles.container}>
