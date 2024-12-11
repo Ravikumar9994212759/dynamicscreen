@@ -5,8 +5,10 @@ import Link from "next/link";
 import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
-// Fetch data from Supabase using getStaticProps with revalidation
+// Use `getStaticProps` with ISR to fetch the data and revalidate every 60 seconds
 export const getStaticProps = async () => {
+  console.log("[Server] Fetching initial data with getStaticProps...");
+
   try {
     const { data, error } = await supabase
       .from('inventoryMaster')
@@ -18,27 +20,35 @@ export const getStaticProps = async () => {
       return { 
         props: { 
           initialData: [], 
-          error: "Unable to fetch data from the database." 
+          error: error.message 
         },
-        revalidate: 60, // Revalidate every 60 seconds
+        revalidate: 60,  // Revalidate every 60 seconds
       };
     }
 
-    return { 
+    // Log the data with screename and nprimarykey
+    console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
+    if (data) {
+      data.forEach(item => {
+        console.log(`[Server] Item: screename = ${item.screename}, nprimarykey = ${item.nprimarykey}`);
+      });
+    }
+
+    return {
       props: { 
         initialData: data || [], 
         error: null 
       },
-      revalidate: 60, // Revalidate every 60 seconds
+      revalidate: 60,  // Revalidate every 60 seconds
     };
   } catch (err) {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
-    return { 
+    return {
       props: { 
         initialData: [], 
-        error: "An unexpected error occurred." 
+        error: err.message 
       },
-      revalidate: 60, // Revalidate every 60 seconds in case of error
+      revalidate: 60,  // Revalidate every 60 seconds in case of error
     };
   }
 };
@@ -130,8 +140,11 @@ const Index = ({ initialData, error: initialError }) => {
         Invoice
       </Typography>
       <Grid container spacing={3} justifyContent="center">
-        {users.map((user) =>
-          user.nprimarykey ? (
+        {users.map((user) => {
+          // Log each user's nprimarykey and screename
+          console.log(`[Client] Rendering Item: screename = ${user.screename}, nprimarykey = ${user.nprimarykey}`);
+          
+          return user.nprimarykey ? (
             <Grid item key={user.nprimarykey}>
               <Link href={`/nested/${user.nprimarykey}/`} passHref>
                 <Card className={styles.card}>
@@ -143,8 +156,8 @@ const Index = ({ initialData, error: initialError }) => {
                 </Card>
               </Link>
             </Grid>
-          ) : null
-        )}
+          ) : null;
+        })}
       </Grid>
     </div>
   );
