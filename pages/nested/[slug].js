@@ -1,4 +1,3 @@
-// pages/nested/[slug].js
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import { Card, CardContent, Typography, Button, TextField } from '@mui/material';
@@ -6,14 +5,12 @@ import { useState, useEffect } from 'react';
 
 // Function to update record and trigger revalidation
 const updateRecord = async (nprimarykey, updatedData) => {
-  // Update the record in the inventoryMaster table
   const { data, error } = await supabase
     .from('inventoryMaster')
-    .update(updatedData)  // updatedData contains the fields you want to update
-    .eq('nprimarykey', nprimarykey);  // Match the primary key to the record
-  
+    .update(updatedData)
+    .eq('nprimarykey', nprimarykey);
+
   if (error) {
-    console.error('Error updating record:', error);
     return { success: false, error };
   }
 
@@ -25,14 +22,11 @@ const updateRecord = async (nprimarykey, updatedData) => {
 // Function to trigger revalidation of a page based on nprimarykey
 const revalidatePage = async (nprimarykey) => {
   try {
-    const revalidatePath = `/nested/${nprimarykey}/`;  // Dynamic path for the page
-    console.log(`Revalidating path: ${revalidatePath}`);
-
-    // Call the revalidation API
+    const revalidatePath = `/nested/${nprimarykey}/`;
     const response = await fetch('/api/revalidate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: nprimarykey.toString() }),  // Send nprimarykey as slug
+      body: JSON.stringify({ slug: nprimarykey.toString() }),
     });
 
     if (response.ok) {
@@ -53,9 +47,7 @@ const SlugPage = ({ item }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (item) {
-      setFormData(item);
-    }
+    if (item) setFormData(item);
   }, [item]);
 
   const handleUpdate = async (e) => {
@@ -63,15 +55,15 @@ const SlugPage = ({ item }) => {
     setLoading(true);
 
     const updatedData = {
-      screename: formData.screename,  // Update with your form data
+      screename: formData.screename,
       jsondata: { menuUrl: formData.menuURL, parentMenuId: formData.parentMenuID },
       nstatus: formData.nstatus,
     };
 
     const { success, error } = await updateRecord(item.nprimarykey, updatedData);
-    
+
     if (success) {
-      alert("Record updated and page revalidated!");
+      alert('Record updated and page revalidated!');
     } else {
       alert(`Error: ${error.message}`);
     }
@@ -87,37 +79,11 @@ const SlugPage = ({ item }) => {
       <CardContent>
         <Typography variant="h5">{item.screename}</Typography>
         <form onSubmit={handleUpdate}>
-          <TextField
-            label="Screen Name"
-            value={formData.screename}
-            onChange={(e) => setFormData({ ...formData, screename: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Menu URL"
-            value={formData.menuURL}
-            onChange={(e) => setFormData({ ...formData, menuURL: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Parent Menu ID"
-            value={formData.parentMenuID}
-            onChange={(e) => setFormData({ ...formData, parentMenuID: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Status"
-            value={formData.nstatus}
-            onChange={(e) => setFormData({ ...formData, nstatus: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <Button type="submit" variant="contained" color="primary" disabled={loading}>
-            {loading ? 'Updating...' : 'Update'}
-          </Button>
+          <TextField label="Screen Name" value={formData.screename} onChange={(e) => setFormData({ ...formData, screename: e.target.value })} fullWidth margin="normal" />
+          <TextField label="Menu URL" value={formData.menuURL} onChange={(e) => setFormData({ ...formData, menuURL: e.target.value })} fullWidth margin="normal" />
+          <TextField label="Parent Menu ID" value={formData.parentMenuID} onChange={(e) => setFormData({ ...formData, parentMenuID: e.target.value })} fullWidth margin="normal" />
+          <TextField label="Status" value={formData.nstatus} onChange={(e) => setFormData({ ...formData, nstatus: e.target.value })} fullWidth margin="normal" />
+          <Button type="submit" variant="contained" color="primary" disabled={loading}>{loading ? 'Updating...' : 'Update'}</Button>
         </form>
       </CardContent>
     </Card>
@@ -126,21 +92,17 @@ const SlugPage = ({ item }) => {
 
 export const getStaticProps = async ({ params }) => {
   const { slug } = params;
-
   const { data, error } = await supabase
     .from('inventoryMaster')
     .select('nprimarykey, screename, jsondata->menuUrl AS menuURL, jsondata->parentMenuId AS parentMenuID, nstatus')
-    .eq('nprimarykey', slug.replace(/\/$/, ''))  // Handle the trailing slash
+    .eq('nprimarykey', slug.replace(/\/$/, ''))
     .single();
 
-  if (error) {
-    console.error('Error fetching data:', error);
-    return { notFound: true };
-  }
+  if (error) return { notFound: true };
 
   return {
     props: { item: data },
-    revalidate: 1,  // Revalidate every 1 second
+    revalidate: 1,
   };
 };
 
@@ -149,15 +111,9 @@ export const getStaticPaths = async () => {
     .from('inventoryMaster')
     .select('nprimarykey');
 
-  if (error) {
-    console.error('Error fetching paths:', error);
-    return { paths: [], fallback: 'blocking' };
-  }
+  if (error) return { paths: [], fallback: 'blocking' };
 
-  const paths = data.map(item => ({
-    params: { slug: item.nprimarykey.toString() + '/' },
-  }));
-
+  const paths = data.map((item) => ({ params: { slug: item.nprimarykey.toString() + '/' } }));
   return { paths, fallback: 'blocking' };
 };
 
