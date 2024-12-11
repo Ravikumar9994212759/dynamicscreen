@@ -5,12 +5,8 @@ import Link from "next/link";
 import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
-// You can either use getStaticProps or getServerSideProps for data fetching.
-// If you want data to always be fresh, consider using getServerSideProps instead of getStaticProps.
-
-export const getServerSideProps = async () => {
-  console.log("[Server] Fetching initial data with getServerSideProps...");
-
+// Fetch data from Supabase using getStaticProps with revalidation
+export const getStaticProps = async () => {
   try {
     const { data, error } = await supabase
       .from('inventoryMaster')
@@ -19,19 +15,36 @@ export const getServerSideProps = async () => {
 
     if (error) {
       console.error("[Server] Supabase Error:", error.message);
-      return { props: { initialData: [], error: error.message } };
+      return { 
+        props: { 
+          initialData: [], 
+          error: "Unable to fetch data from the database." 
+        },
+        revalidate: 60, // Revalidate every 60 seconds
+      };
     }
 
-    console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
-    return { props: { initialData: data || [], error: null } };
+    return { 
+      props: { 
+        initialData: data || [], 
+        error: null 
+      },
+      revalidate: 60, // Revalidate every 60 seconds
+    };
   } catch (err) {
-    console.error("[Server] Unexpected error in getServerSideProps:", err.message);
-    return { props: { initialData: [], error: err.message } };
+    console.error("[Server] Unexpected error in getStaticProps:", err.message);
+    return { 
+      props: { 
+        initialData: [], 
+        error: "An unexpected error occurred." 
+      },
+      revalidate: 60, // Revalidate every 60 seconds in case of error
+    };
   }
 };
 
 const Index = ({ initialData, error: initialError }) => {
-  const [users, setUsers] = useState(initialData);  // Static data from SSR
+  const [users, setUsers] = useState(initialData);  // Static data from ISR
   const [error, setError] = useState(initialError);
 
   // Polling mechanism to refresh data every 10 seconds (client-side)
@@ -89,8 +102,26 @@ const Index = ({ initialData, error: initialError }) => {
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
 
+  // Handle empty users data gracefully
+  if (!users || users.length === 0) {
+    return (
+      <div className={styles.container}>
+        <Typography align="center" variant="h6" color="textSecondary">
+          No data available. Please try again later.
+        </Typography>
+      </div>
+    );
+  }
+
+  // If there's an error fetching the data
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className={styles.container}>
+        <Typography align="center" variant="h6" color="error">
+          Error: {error}
+        </Typography>
+      </div>
+    );
   }
 
   return (
@@ -99,26 +130,20 @@ const Index = ({ initialData, error: initialError }) => {
         Invoice
       </Typography>
       <Grid container spacing={3} justifyContent="center">
-        {users && users.length > 0 ? (
-          users.map((user) =>
-            user.nprimarykey ? (
-              <Grid item key={user.nprimarykey}>
-                <Link href={`/nested/${user.nprimarykey}/`} passHref>
-                  <Card className={styles.card}>
-                    <CardContent>
-                      {getIcon(user.screename)}
-                      <Typography className={styles.text}>{user.screename}</Typography>
-                      <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </Grid>
-            ) : null
-          )
-        ) : (
-          <Typography align="center" variant="h6" color="textSecondary">
-            No data available. Please try again later.
-          </Typography>
+        {users.map((user) =>
+          user.nprimarykey ? (
+            <Grid item key={user.nprimarykey}>
+              <Link href={`/nested/${user.nprimarykey}/`} passHref>
+                <Card className={styles.card}>
+                  <CardContent>
+                    {getIcon(user.screename)}
+                    <Typography className={styles.text}>{user.screename}</Typography>
+                    <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
+                  </CardContent>
+                </Card>
+              </Link>
+            </Grid>
+          ) : null
         )}
       </Grid>
     </div>
