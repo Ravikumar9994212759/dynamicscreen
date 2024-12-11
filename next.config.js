@@ -1,16 +1,15 @@
 // next.config.js
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
   swcMinify: true,
   trailingSlash: true,  // Ensure URLs include trailing slashes
-  distDir: '.next',     // Keep the default build folder unless necessary to change
+  distDir: '.next',     // Default build folder
 
-  // Add custom headers for dynamic routes like /nested/[slug]
+  // Custom headers for dynamic routes like /nested/[slug]
   async headers() {
     return [
       {
-        source: '/nested/:slug*/',  // Dynamic path
+        source: '/nested/:slug*/',  // Dynamic path pattern
         headers: [
           {
             key: 'Cache-Control',
@@ -21,5 +20,3 @@ const nextConfig = {
     ];
   },
 };
-
-module.exports = nextConfig;
