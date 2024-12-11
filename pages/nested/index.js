@@ -33,7 +33,7 @@ export const getStaticProps = async () => {
         initialData: data || [], 
         error: null 
       },
-      revalidate: 60, // Regenerate page every 60 seconds
+      revalidate: 1, // Regenerate page every 60 seconds
     };
   } catch (err) {
     console.error("[Server] Unexpected error in getStaticProps:", err.message);
@@ -42,7 +42,7 @@ export const getStaticProps = async () => {
         initialData: [], 
         error: err.message 
       },
-      revalidate: 60, // Regenerate page every 60 seconds
+      revalidate: 1, // Regenerate page every 60 seconds
     };
   }
 };
