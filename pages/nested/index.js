@@ -5,9 +5,11 @@ import Link from "next/link";
 import styles from "./index.module.css";
 import supabase from "../../lib/supabase";
 
-// Fetch data from Supabase using getStaticProps
-export const getStaticProps = async () => {
-  console.log("[Server] Fetching initial data with getStaticProps...");
+// You can either use getStaticProps or getServerSideProps for data fetching.
+// If you want data to always be fresh, consider using getServerSideProps instead of getStaticProps.
+
+export const getServerSideProps = async () => {
+  console.log("[Server] Fetching initial data with getServerSideProps...");
 
   try {
     const { data, error } = await supabase
@@ -17,28 +19,19 @@ export const getStaticProps = async () => {
 
     if (error) {
       console.error("[Server] Supabase Error:", error.message);
-      return {
-        props: { initialData: [], error: error.message },
-        revalidate: 60,  // Revalidate every 60 seconds
-      };
+      return { props: { initialData: [], error: error.message } };
     }
 
     console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
-    return {
-      props: { initialData: data || [], error: null },
-      revalidate: 60,  // Revalidate every 60 seconds
-    };
+    return { props: { initialData: data || [], error: null } };
   } catch (err) {
-    console.error("[Server] Unexpected error in getStaticProps:", err.message);
-    return {
-      props: { initialData: [], error: err.message },
-      revalidate: 60,  // Revalidate every 60 seconds in case of error
-    };
+    console.error("[Server] Unexpected error in getServerSideProps:", err.message);
+    return { props: { initialData: [], error: err.message } };
   }
 };
 
 const Index = ({ initialData, error: initialError }) => {
-  const [users, setUsers] = useState(initialData);  // Static data from ISR
+  const [users, setUsers] = useState(initialData);  // Static data from SSR
   const [error, setError] = useState(initialError);
 
   // Polling mechanism to refresh data every 10 seconds (client-side)
