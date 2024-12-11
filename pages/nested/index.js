@@ -64,8 +64,11 @@ const Index = ({ initialData, error: initialError }) => {
       </Typography>
       <Grid container spacing={3} justifyContent="center">
         {users && users.length > 0 ? (
-          users.map((user) =>
-            user.nprimarykey ? (
+          users.map((user) => {
+            // Console log to check nprimarykey and screename
+            console.log("nprimarykey:", user.nprimarykey);  // Log nprimarykey
+            console.log("screename:", user.screename);  // Log screename
+            return user.nprimarykey ? (
               <Grid item key={user.nprimarykey}>
                 <Link href={`/nested/${user.nprimarykey}/`} passHref>
                   <Card className={styles.card}>
@@ -77,8 +80,8 @@ const Index = ({ initialData, error: initialError }) => {
                   </Card>
                 </Link>
               </Grid>
-            ) : null
-          )
+            ) : null;
+          })
         ) : (
           <Typography align="center" variant="h6" color="textSecondary">
             No data available. Please try again later.
