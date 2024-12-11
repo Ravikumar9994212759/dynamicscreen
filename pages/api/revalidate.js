@@ -7,10 +7,15 @@ export default async function handler(req, res) {
     }
 
     try {
-      const revalidatePath = `/nested/${slug.replace(/\/$/, '')}/`;
+      // Ensure the URL is properly formatted with a trailing slash
+      const revalidatePath = `/nested/${slug.replace(/\/$/, '')}/`; // Remove any extra slashes
+      console.log(`Revalidating path: ${revalidatePath}`);
+      
+      // Trigger revalidation for the page
       await res.unstable_revalidate(revalidatePath);
       return res.json({ message: `Revalidated ${revalidatePath}` });
     } catch (err) {
+      console.error('Error during revalidation:', err);
       return res.status(500).json({ message: `Error revalidating: ${err.message}` });
     }
   } else {

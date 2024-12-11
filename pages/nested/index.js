@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Grid, Card, CardContent, Typography } from '@mui/material';
-import Link from 'next/link';
-import { Category, People, Receipt, Storage, Settings, Work } from '@mui/icons-material';
-import useRealTimeUpdates from '../../lib/useRealTimeUpdates'; // <-- Import the custom hook
-import styles from './index.module.css';
-import supabase from '../../lib/supabase';
+import React, { useState } from "react";
+import { Grid, Card, CardContent, Typography } from "@mui/material";
+import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material";
+import Link from "next/link";
+import styles from "./index.module.css";
+import supabase from "../../lib/supabase";
 
+// Fetch data from Supabase using getStaticProps
 export const getStaticProps = async () => {
+  console.log("[Server] Fetching initial data with getStaticProps...");
+
   try {
     const { data, error } = await supabase
       .from('inventoryMaster')
@@ -14,36 +16,39 @@ export const getStaticProps = async () => {
       .order('nprimarykey', { ascending: true });
 
     if (error) {
-      return { props: { initialData: [], error: error.message } };
+      console.error("[Server] Supabase Error:", error.message);
+      return {
+        props: { initialData: [], error: error.message },
+        revalidate: 1,  // Revalidate every 1 second for updates
+      };
     }
 
+    console.log("[Server] Initial data fetched:", JSON.stringify(data, null, 2));
     return {
       props: { initialData: data || [], error: null },
-      revalidate: 1,
+      revalidate: 1,  // Revalidate every 1 second
     };
   } catch (err) {
+    console.error("[Server] Unexpected error in getStaticProps:", err.message);
     return {
       props: { initialData: [], error: err.message },
-      revalidate: 1,
+      revalidate: 1,  // Revalidate every 1 second in case of error
     };
   }
 };
 
 const Index = ({ initialData, error: initialError }) => {
-  const [users, setUsers] = useState(initialData);
+  const [users, setUsers] = useState(initialData);  // Static data from ISR
   const [error, setError] = useState(initialError);
-
-  // Use the real-time updates hook
-  useRealTimeUpdates();
 
   const getIcon = (screename) => {
     const dynamicIconMapping = {
-      'Product Type': <Category className={styles.icon} />,
-      'Customer Master': <People className={styles.icon} />,
-      'Tax Type': <Receipt className={styles.icon} />,
-      'Product Master': <Storage className={styles.icon} />,
-      'Settings': <Settings className={styles.icon} />,
-      'Work': <Work className={styles.icon} />,
+      "Product Type": <Category className={styles.icon} />,
+      "Customer Master": <People className={styles.icon} />,
+      "Tax Type": <Receipt className={styles.icon} />,
+      "Product Master": <Storage className={styles.icon} />,
+      "Settings": <Settings className={styles.icon} />,
+      "Work": <Work className={styles.icon} />,
     };
     return dynamicIconMapping[screename] || <Category className={styles.icon} />;
   };
@@ -58,19 +63,27 @@ const Index = ({ initialData, error: initialError }) => {
         Invoice
       </Typography>
       <Grid container spacing={3} justifyContent="center">
-        {users.map((user) => (
-          <Grid item key={user.nprimarykey}>
-            <Link href={`/nested/${user.nprimarykey}/`} passHref>
-              <Card className={styles.card}>
-                <CardContent>
-                  {getIcon(user.screename)}
-                  <Typography className={styles.text}>{user.screename}</Typography>
-                  <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
-                </CardContent>
-              </Card>
-            </Link>
-          </Grid>
-        ))}
+        {users && users.length > 0 ? (
+          users.map((user) =>
+            user.nprimarykey ? (
+              <Grid item key={user.nprimarykey}>
+                <Link href={`/nested/${user.nprimarykey}/`} passHref>
+                  <Card className={styles.card}>
+                    <CardContent>
+                      {getIcon(user.screename)}
+                      <Typography className={styles.text}>{user.screename}</Typography>
+                      <Typography variant="body2" color="textSecondary">{user.menuURL}</Typography>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </Grid>
+            ) : null
+          )
+        ) : (
+          <Typography align="center" variant="h6" color="textSecondary">
+            No data available. Please try again later.
+          </Typography>
+        )}
       </Grid>
     </div>
   );
