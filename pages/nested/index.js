@@ -1,3 +1,4 @@
+// pages/index.js
 import React, { useState, useEffect } from "react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { Category, People, Receipt, Storage, Settings, Work } from "@mui/icons-material";
@@ -82,41 +83,58 @@ UserItem.displayName = "UserItem";
 const Index = ({ initialData, error: initialError }) => {
   const [users, setUsers] = useState(initialData);
   const [error, setError] = useState(initialError);
+  const [updateStatus, setUpdateStatus] = useState(null);
 
   useEffect(() => {
     const channel = supabase
       .channel('inventoryMaster')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'inventoryMaster' }, async (payload) => {
         console.log(`[Client] Data updated: screename = ${payload.new.screename}, nprimarykey = ${payload.new.nprimarykey}`);
-
-        // Trigger revalidation after data update
-        await fetch('/api/revalidate', {
-          method: 'POST',
-          body: JSON.stringify({
-            secret: process.env.REVALIDATE_SECRET,
-            path: `/` // Adjust this to the path you want to revalidate
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        // Update only the modified record
+  
+        try {
+          console.log("Sending revalidation request...");
+          
+          // Trigger revalidation after data update
+          const response = await fetch('/api/revalidate', {
+            method: 'POST',
+            body: JSON.stringify({
+              slug: String(payload.new.nprimarykey),  // Ensure slug is always a string
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+  
+          // Check if the request was successful
+          if (response.ok) {
+            console.log("Revalidation request successful:", await response.json());
+          } else {
+            console.error("Revalidation failed with status:", response.status);
+          }
+        } catch (error) {
+          console.error("Error during fetch request:", error);
+        }
+  
+        // Update only the modified record in state
         setUsers((prevUsers) => {
           const updatedUsers = prevUsers.map((user) =>
             user.nprimarykey === payload.new.nprimarykey ? { ...user, ...payload.new } : user
           );
           return updatedUsers;
         });
+  
+        // Provide feedback when the page is updated
+        setUpdateStatus(`Page updated after ${payload.new.screename} change`);
       })
       .subscribe();
-
+  
     // Clean up the subscription on component unmount
     return () => {
       console.log("[Client] Unsubscribing from Supabase channel.");
       channel.unsubscribe();
     };
   }, []);
+  
 
   if (!users || users.length === 0) {
     return (
@@ -140,6 +158,7 @@ const Index = ({ initialData, error: initialError }) => {
 
   return (
     <div className={styles.container}>
+      {updateStatus && <Typography color="success.main">{updateStatus}</Typography>}
       <Typography variant="h4" align="left" gutterBottom>
         Invoice
       </Typography>
