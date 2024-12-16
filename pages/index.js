@@ -1,41 +1,49 @@
-import { Box, Chip, Stack, Typography } from "@mui/material";
-import Head from "next/head";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabase";
+import React, { useEffect, useState } from 'react';
+import supabase from '../lib/supabase';
+import MenuCard from '../components/MenuCard';
 
-export default function Home() {
-  const [isClient, setIsClient] = useState(false);
+const HomePage = ({ menus }) => {
+  const [orderedMenus, setOrderedMenus] = useState([]);
 
+  // Sort the menus by screenname to maintain a consistent order
   useEffect(() => {
-    // Set state to true after the component has mounted on the client
-    setIsClient(true);
-  }, []);
+    // Sort by screenname alphabetically
+    const sortedMenus = [...menus].sort((a, b) => a.screename.localeCompare(b.screename));
+    setOrderedMenus(sortedMenus);
+  }, [menus]); // Whenever menus change, resort the array
 
   return (
-    <Box sx={{ marginBottom: 20 }}>
-      <Head>
-        <title>Dynamic | Home</title>
-        <meta name="keyword" content="home" />
-      </Head>
-      <Stack alignItems="center" justifyContent="center">
-        {isClient && (
-          <Image src="/1.png" width={500} height={250} sx={{ marginTop: 20 }} />
-        )}
-        <Stack alignSelf="flex-start" spacing={2} mb={10}>
-          {/* <Typography variant="h3">Introduction</Typography> */}
-          {/* <Typography color="gray">
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. A
-            perspiciatis nam recusandae facere magnam molestias at aut enim
-            fugiat, excepturi laboriosam odit sit fuga incidunt accusantium
-            quaerat dignissimos ipsam error.
-          </Typography> */}
-        </Stack>
-        <Link href="/nested" passHref>
-          <Chip label="Go to Screens" />
-        </Link>
-      </Stack>
-    </Box>
+    <div className="menu-grid">
+      {orderedMenus.length > 0 ? (
+        orderedMenus.map((menu) => (
+          <MenuCard key={menu.nprimarykey} screenname={menu.screename} />
+        ))
+      ) : (
+        <p>No menu items available..</p>
+      )}
+    </div>
   );
+};
+
+export async function getStaticProps() {
+  try {
+    // Fetch data from the inventoryMaster table
+    const { data: menus, error } = await supabase
+      .from('inventoryMaster')
+      .select('nprimarykey, screename');
+
+    console.log('Fetched Menus:', menus); // Debugging log
+
+    if (error) throw error;
+
+    return {
+      props: { menus: menus || [] }, // Default to empty array
+      revalidate: 10, // ISR every 10 seconds
+    };
+  } catch (error) {
+    console.error('Error fetching menu list:', error.message);
+    return { props: { menus: [] } }; // Return empty array on failure
+  }
 }
+
+export default HomePage;
