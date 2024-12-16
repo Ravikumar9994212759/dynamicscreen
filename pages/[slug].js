@@ -3,8 +3,11 @@ import supabase from '../lib/supabase';
 
 const MenuDetails = ({ menuData }) => {
   if (!menuData) {
+    console.log('Menu item not found. Displaying fallback message.');
     return <h1>Menu Item Not Found</h1>;
   }
+
+  console.log('Menu Data:', menuData); // Log menu data when found
 
   return (
     <div style={styles.container}>
@@ -21,13 +24,19 @@ const MenuDetails = ({ menuData }) => {
 
 // Generate paths for ISR
 export async function getStaticPaths() {
+  console.log('Generating static paths...');
+
   try {
     const { data: menus, error } = await supabase.from('inventoryMaster').select('screenname');
     if (error) throw error;
 
+    console.log('Fetched menus for paths:', menus); // Log fetched menu data
+
     const paths = menus.map((menu) => ({
       params: { slug: menu.screenname.toLowerCase().replace(/\s+/g, '-') }, // Slugify screenname
     }));
+
+    console.log('Generated paths:', paths); // Log the generated paths
 
     return {
       paths,
@@ -41,6 +50,7 @@ export async function getStaticPaths() {
 
 export async function getStaticProps(context) {
   const { slug } = context.params;
+  console.log(`Fetching details for menu: ${slug}`);
 
   try {
     const { data: menus, error } = await supabase.from('inventoryMaster').select('*');
@@ -50,6 +60,8 @@ export async function getStaticProps(context) {
       (menu) =>
         menu.screenname.toLowerCase().replace(/\s+/g, '-') === slug
     );
+
+    console.log('Fetched menu data:', menuData); // Log the fetched menu data
 
     return {
       props: { menuData: menuData || null },
