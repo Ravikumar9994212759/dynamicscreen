@@ -1,5 +1,5 @@
 import React from 'react';
-import supabase from '../lib/supabaseClient';
+import supabase from '../lib/supabase';
 
 const MenuDetails = ({ menuData }) => {
   if (!menuData) {
