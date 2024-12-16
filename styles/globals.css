@@ -1,9 +1,11 @@
 /* Grid Container for Menus */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Ensure responsive grid */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid with flexible columns */
   gap: 20px;
   padding: 20px;
+  justify-items: center; /* Center items horizontally */
+  align-items: start; /* Align items to the top */
 }
 
 /* Menu Card Styling */
@@ -12,29 +14,56 @@
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
   cursor: pointer;
   text-align: center;
   padding: 20px;
   margin: 10px;
   width: 100%;
-  max-width: 350px; /* Ensure card doesn't stretch too wide */
+  max-width: 350px; /* Prevents card from getting too wide */
+  min-height: 120px; /* Adds consistency in height */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Space out content within the card */
+  align-items: center; /* Centers content inside the card */
+  overflow: hidden; /* Prevents content from overflowing */
 }
 
 .menu-card:hover {
-  transform: translateY(-5px); /* Lift effect on hover */
+  transform: translateY(-5px); /* Subtle lift effect on hover */
   box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3); /* Blue shadow on hover */
-  border-color: #006deb; /* Highlight border color */
+  border-color: #3a75b8; /* Highlight border color */
+  background-color: #f0faff; /* Light blue background on hover for more emphasis */
 }
 
 .menu-card:active {
-  transform: translateY(0px);
+  transform: translateY(0px); /* Reset hover effect when clicked */
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff; /* Reset background color after click */
 }
 
 .menu-card h3 {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px; /* Increase font size for better readability */
+  font-weight: 700; /* Stronger font weight for emphasis */
   color: #333333;
   margin: 0;
+  text-transform: capitalize; /* Capitalize text for better structure */
+}
+
+.menu-card p {
+  font-size: 14px;
+  color: #666666;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Add responsive text size for smaller screens */
+@media (max-width: 768px) {
+  .menu-card h3 {
+    font-size: 18px; /* Slightly smaller heading for smaller screens */
+  }
+
+  .menu-card p {
+    font-size: 12px; /* Smaller text for paragraph */
+  }
 }

@@ -32,6 +32,7 @@ export async function getStaticPaths() {
 
     console.log('Fetched menus for paths:', menus); // Log fetched menu data
 
+    // Generate paths based on menu screennames
     const paths = menus.map((menu) => ({
       params: { slug: menu.screenname.toLowerCase().replace(/\s+/g, '-') }, // Slugify screenname
     }));
@@ -40,11 +41,11 @@ export async function getStaticPaths() {
 
     return {
       paths,
-      fallback: true,
+      fallback: 'blocking', // Use 'blocking' to ensure the page is generated before serving
     };
   } catch (error) {
     console.error('Error generating paths:', error.message);
-    return { paths: [], fallback: false };
+    return { paths: [], fallback: 'blocking' };
   }
 }
 
@@ -53,9 +54,11 @@ export async function getStaticProps(context) {
   console.log(`Fetching details for menu: ${slug}`);
 
   try {
+    // Fetch all menu items from Supabase
     const { data: menus, error } = await supabase.from('inventoryMaster').select('*');
     if (error) throw error;
 
+    // Find the menu item matching the slug
     const menuData = menus.find(
       (menu) =>
         menu.screenname.toLowerCase().replace(/\s+/g, '-') === slug
