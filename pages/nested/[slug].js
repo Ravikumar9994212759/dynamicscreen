@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import supabase from '../../lib/supabase';
 import { Typography, Card, CardContent, Grid } from '@mui/material';
 
-// Generate static paths at build time
+// Generate static paths at build time-Modified
 export const getStaticPaths = async () => {
   const { data, error } = await supabase
     .from('inventoryMaster')
