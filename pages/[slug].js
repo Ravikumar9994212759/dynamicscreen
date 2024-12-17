@@ -11,7 +11,7 @@ const MenuDetails = ({ menuData }) => {
 
   return (
     <div style={styles.container}>
-      <h1>{menuData.screenname}</h1>
+      <h1>{menuData.screename}</h1>
       <p>
         <strong>Menu URL:</strong> {menuData.jsondata.menuUrl}
       </p>
@@ -22,6 +22,38 @@ const MenuDetails = ({ menuData }) => {
   );
 };
 
+// ISR - Pre-render the page at build time and revalidate after 60 seconds
+export async function getStaticProps(context) {
+  const { slug } = context.params;
+  console.log(`Fetching details for menu: ${slug}`);
+
+  try {
+    const start = Date.now();
+    const { data: menus, error } = await supabase.from('inventoryMaster').select('*');
+    const duration = Date.now() - start;
+    console.log(`Query execution time: ${duration}ms`);
+
+    if (error) throw error;
+
+    const menuData = menus.find((menu) => {
+      return menu.screename.toLowerCase().replace(/\s+/g, '-') === slug;
+    });
+
+    console.log('Menu data fetched:', menuData);
+
+    return {
+      props: { menuData: menuData || null },
+      revalidate: 60,  // Regenerate page every 60 seconds
+    };
+  } catch (error) {
+    console.error('Error fetching menu details:', error.message);
+    return {
+      props: { menuData: null },
+    };
+  }
+}
+
+// Static paths for dynamic routing
 export async function getStaticPaths() {
   console.log('Generating static paths...');
 
@@ -29,56 +61,21 @@ export async function getStaticPaths() {
     const { data: menus, error } = await supabase.from('inventoryMaster').select('screename');
     if (error) throw error;
 
-    console.log('Fetched menus for paths:', menus); 
-
     const paths = menus.map((menu) => ({
-      params: { slug: menu.screename.toLowerCase().replace(/\s+/g, '-') }, 
+      params: { slug: menu.screename.toLowerCase().replace(/\s+/g, '-') },
     }));
 
-    console.log('Generated paths:', paths); 
+    console.log('Generated static paths:', paths);
 
     return {
       paths,
-      fallback: 'blocking', 
+      fallback: 'blocking',  // Block until the page is ready if not generated yet
     };
   } catch (error) {
     console.error('Error generating paths:', error.message);
     return { paths: [], fallback: 'blocking' };
   }
 }
-
-export async function getStaticProps(context) {
-  const { slug } = context.params;
-  console.log(`Fetching details for menu: ${slug}`);
-
-  try {
-    const { data: menus, error } = await supabase.from('inventoryMaster').select('*');
-    if (error) throw error;
-
-    console.log('Fetched menus:', menus);
-
-    const menuData = menus.find((menu) => {
-      if (menu.screename && typeof menu.screename === 'string') {
-        return menu.screename.toLowerCase().replace(/\s+/g, '-') === slug;
-      }
-      return false;
-    });
-
-    console.log('Fetched menu data:', menuData);
-
-    return {
-      props: { menuData: menuData || null },
-      revalidate: 10, 
-    };
-  } catch (error) {
-    console.error('Error fetching menu details:', error.message);
-
-    return { 
-      props: { menuData: null } 
-    };
-  }
-}
-
 
 const styles = {
   container: {
