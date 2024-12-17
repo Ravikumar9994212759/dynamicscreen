@@ -21,7 +21,7 @@
   margin: 10px;
   width: 100%;
   max-width: 350px; /* Prevents card from getting too wide */
-  min-height: 120px; /* Adds consistency in height */
+  min-height: 100px; /* Adds consistency in height */
   display: flex;
   flex-direction: column;
   justify-content: space-between; /* Space out content within the card */
@@ -33,7 +33,7 @@
   transform: translateY(-5px); /* Subtle lift effect on hover */
   box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3); /* Blue shadow on hover */
   border-color: #3a75b8; /* Highlight border color */
-  background-color: #f0faff; /* Light blue background on hover for more emphasis */
+  background-color: #227dab; /* Light blue background on hover for more emphasis */
 }
 
 .menu-card:active {

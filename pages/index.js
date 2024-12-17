@@ -5,17 +5,15 @@ import MenuCard from '../components/MenuCard';
 const HomePage = ({ menus }) => {
   const [orderedMenus, setOrderedMenus] = useState([]);
 
-  // Sort the menus by screenname to maintain a consistent order
   useEffect(() => {
     console.log('Menus changed, starting to sort...');
     
-    // Sort by screenname alphabetically
     const sortedMenus = [...menus].sort((a, b) => a.screename.localeCompare(b.screename));
     console.log('Sorted Menus:', sortedMenus);
 
     setOrderedMenus(sortedMenus);
 
-  }, [menus]); // Whenever menus change, resort the array
+  }, [menus]); 
 
   return (
     <div className="menu-grid">
@@ -33,7 +31,6 @@ const HomePage = ({ menus }) => {
 export async function getStaticProps() {
   console.log('Fetching menu data from Supabase...');
   try {
-    // Fetch data from the inventoryMaster table
     const { data: menus, error } = await supabase
       .from('inventoryMaster')
       .select('nprimarykey, screename');
@@ -43,14 +40,14 @@ export async function getStaticProps() {
       throw error;
     }
 
-    console.log('Fetched Menus:', menus); // Debugging log
+    console.log('Fetched Menus:', menus); 
     return {
-      props: { menus: menus || [] }, // Default to empty array if no menus
-      revalidate: 10, // ISR every 10 seconds
+      props: { menus: menus || [] }, 
+      revalidate: 10, 
     };
   } catch (error) {
     console.error('Error fetching menu list:', error.message);
-    return { props: { menus: [] } }; // Return empty array on failure
+    return { props: { menus: [] } }; 
   }
 }
 

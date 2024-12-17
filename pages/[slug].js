@@ -7,7 +7,7 @@ const MenuDetails = ({ menuData }) => {
     return <h1>Menu Item Not Found</h1>;
   }
 
-  console.log('Menu Data:', menuData); // Log menu data when found
+  console.log('Menu Data:', menuData);
 
   return (
     <div style={styles.container}>
@@ -22,26 +22,24 @@ const MenuDetails = ({ menuData }) => {
   );
 };
 
-// Generate paths for ISR
 export async function getStaticPaths() {
   console.log('Generating static paths...');
 
   try {
-    const { data: menus, error } = await supabase.from('inventoryMaster').select('screenname');
+    const { data: menus, error } = await supabase.from('inventoryMaster').select('screename');
     if (error) throw error;
 
-    console.log('Fetched menus for paths:', menus); // Log fetched menu data
+    console.log('Fetched menus for paths:', menus); 
 
-    // Generate paths based on menu screennames
     const paths = menus.map((menu) => ({
-      params: { slug: menu.screenname.toLowerCase().replace(/\s+/g, '-') }, // Slugify screenname
+      params: { slug: menu.screename.toLowerCase().replace(/\s+/g, '-') }, 
     }));
 
-    console.log('Generated paths:', paths); // Log the generated paths
+    console.log('Generated paths:', paths); 
 
     return {
       paths,
-      fallback: 'blocking', // Use 'blocking' to ensure the page is generated before serving
+      fallback: 'blocking', 
     };
   } catch (error) {
     console.error('Error generating paths:', error.message);
@@ -54,27 +52,33 @@ export async function getStaticProps(context) {
   console.log(`Fetching details for menu: ${slug}`);
 
   try {
-    // Fetch all menu items from Supabase
     const { data: menus, error } = await supabase.from('inventoryMaster').select('*');
     if (error) throw error;
 
-    // Find the menu item matching the slug
-    const menuData = menus.find(
-      (menu) =>
-        menu.screenname.toLowerCase().replace(/\s+/g, '-') === slug
-    );
+    console.log('Fetched menus:', menus);
 
-    console.log('Fetched menu data:', menuData); // Log the fetched menu data
+    const menuData = menus.find((menu) => {
+      if (menu.screename && typeof menu.screename === 'string') {
+        return menu.screename.toLowerCase().replace(/\s+/g, '-') === slug;
+      }
+      return false;
+    });
+
+    console.log('Fetched menu data:', menuData);
 
     return {
       props: { menuData: menuData || null },
-      revalidate: 10,
+      revalidate: 10, 
     };
   } catch (error) {
     console.error('Error fetching menu details:', error.message);
-    return { props: { menuData: null } };
+
+    return { 
+      props: { menuData: null } 
+    };
   }
 }
+
 
 const styles = {
   container: {
