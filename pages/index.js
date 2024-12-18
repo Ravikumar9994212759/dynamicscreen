@@ -29,7 +29,7 @@ const HomePage = ({ menus }) => {
 };
 
 export async function getStaticProps() {
-  console.log('Fetching menu data from Supabase...');
+  console.log('Starting SSR for homepage...');
   try {
     const { data: menus, error } = await supabase
       .from('inventoryMaster')
