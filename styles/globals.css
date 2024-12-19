@@ -1,14 +1,13 @@
-/* Grid Container for Menus */
+
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid with flexible columns */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
   gap: 20px;
   padding: 20px;
-  justify-items: center; /* Center items horizontally */
-  align-items: start; /* Align items to the top */
+  justify-items: center; 
+  align-items: start; 
 }
 
-/* Menu Card Styling */
 .menu-card {
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
@@ -20,34 +19,34 @@
   padding: 20px;
   margin: 10px;
   width: 100%;
-  max-width: 350px; /* Prevents card from getting too wide */
-  min-height: 100px; /* Adds consistency in height */
+  max-width: 350px; 
+  min-height: 100px; 
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Space out content within the card */
-  align-items: center; /* Centers content inside the card */
-  overflow: hidden; /* Prevents content from overflowing */
+  justify-content: space-between; 
+  align-items: center; 
+  overflow: hidden; 
 }
 
 .menu-card:hover {
-  transform: translateY(-5px); /* Subtle lift effect on hover */
-  box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3); /* Blue shadow on hover */
-  border-color: #3a75b8; /* Highlight border color */
-  background-color: #227dab; /* Light blue background on hover for more emphasis */
+  transform: translateY(-5px); 
+  box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3); 
+  border-color: #3a75b8;
+  background-color: #227dab; 
 }
 
 .menu-card:active {
-  transform: translateY(0px); /* Reset hover effect when clicked */
+  transform: translateY(0px); 
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #ffffff; /* Reset background color after click */
+  background-color: #ffffff; 
 }
 
 .menu-card h3 {
-  font-size: 20px; /* Increase font size for better readability */
-  font-weight: 700; /* Stronger font weight for emphasis */
+  font-size: 20px; 
+  font-weight: 700;
   color: #333333;
   margin: 0;
-  text-transform: capitalize; /* Capitalize text for better structure */
+  text-transform: capitalize;
 }
 
 .menu-card p {
@@ -57,13 +56,131 @@
   margin-bottom: 0;
 }
 
-/* Add responsive text size for smaller screens */
 @media (max-width: 768px) {
   .menu-card h3 {
-    font-size: 18px; /* Slightly smaller heading for smaller screens */
+    font-size: 18px; 
   }
 
   .menu-card p {
-    font-size: 12px; /* Smaller text for paragraph */
+    font-size: 12px; 
+  }
+}
+
+
+/* General Form Styles */
+.dynamic-form {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); 
+  gap: 20px;
+  background-color: #ffffff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+  margin: 0 auto; 
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-size: 18px;
+  color: #333;
+  font-weight: 800;
+}
+
+input, textarea, select {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #3a75b8;
+  box-shadow: 0 0 4px rgba(58, 117, 184, 0.4);
+}
+
+textarea {
+  resize: vertical; 
+  min-height: 10px;
+}
+
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+}
+
+select {
+  padding: 12px;
+  cursor: pointer;
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 14px;
+  border: none;
+  background-color: #3a75b8;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"] {
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #227dab;
+}
+
+button:active {
+  background-color: #1c5f8e;
+}
+
+/* Cancel Button */
+button[type="button"] {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+button[type="button"]:hover {
+  background-color: #d1d1d1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  grid-column: span 3; 
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dynamic-form {
+    grid-template-columns: repeat(2, 1fr); 
+  }
+}
+
+@media (max-width: 768px) {
+  .dynamic-form {
+    grid-template-columns: 1fr;
+    padding: 15px;
+  }
+
+  input, textarea, select {
+    font-size: 16px;
+  }
+
+  button {
+    font-size: 16px;
   }
 }
