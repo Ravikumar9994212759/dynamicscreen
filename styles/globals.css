@@ -1,13 +1,41 @@
-
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-  gap: 20px;
-  padding: 20px;
-  justify-items: center; 
-  align-items: start; 
+/* General Reset to Normalize Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Ensure padding/margin is included in dimensions */
 }
 
+html, body {
+  width: 100vw; /* Full width of the viewport */
+  height: 100vh; /* Full height of the viewport */
+  overflow: hidden; /* Prevent scrollbars */
+  font-family: Arial, sans-serif;
+  transform: scale(1); /* Ensure no unintended zoom effects */
+}
+
+/* Root Container */
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  background-color: #f9f9f9;
+  overflow: hidden;
+}
+
+/* Menu Grid */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+  height: 100%;
+}
+
+/* Menu Card */
 .menu-card {
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
@@ -17,162 +45,137 @@
   cursor: pointer;
   text-align: center;
   padding: 20px;
-  margin: 10px;
+  margin: 0; /* Remove additional margin */
   width: 100%;
-  max-width: 350px; 
-  min-height: 100px; 
+  max-width: 300px; /* Restrict card size */
+  min-height: 100px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; 
-  align-items: center; 
-  overflow: hidden; 
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
 }
 
 .menu-card:hover {
-  transform: translateY(-5px); 
-  box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3); 
+  transform: translateY(-5px);
+  box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3);
   border-color: #3a75b8;
-  background-color: #227dab; 
-}
-
-.menu-card:active {
-  transform: translateY(0px); 
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #ffffff; 
-}
-
-.menu-card h3 {
-  font-size: 20px; 
-  font-weight: 700;
-  color: #333333;
-  margin: 0;
-  text-transform: capitalize;
-}
-
-.menu-card p {
-  font-size: 14px;
-  color: #666666;
-  margin-top: 10px;
-  margin-bottom: 0;
-}
-
-@media (max-width: 768px) {
-  .menu-card h3 {
-    font-size: 18px; 
-  }
-
-  .menu-card p {
-    font-size: 12px; 
-  }
-}
-
-
-/* General Form Styles */
-.dynamic-form {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); 
-  gap: 20px;
-  background-color: #ffffff;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 1200px;
-  margin: 0 auto; 
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-label {
-  font-size: 18px;
-  color: #333;
-  font-weight: 800;
-}
-
-input, textarea, select {
-  padding: 12px;
-  font-size: 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-input:focus, textarea:focus, select:focus {
-  border-color: #3a75b8;
-  box-shadow: 0 0 4px rgba(58, 117, 184, 0.4);
-}
-
-textarea {
-  resize: vertical; 
-  min-height: 10px;
-}
-
-input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  margin-top: 4px;
-}
-
-select {
-  padding: 12px;
-  cursor: pointer;
-}
-
-button {
-  padding: 12px 20px;
-  font-size: 14px;
-  border: none;
-  background-color: #3a75b8;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-button[type="submit"] {
-  margin-right: 10px;
-}
-
-button:hover {
   background-color: #227dab;
 }
 
-button:active {
-  background-color: #1c5f8e;
+.menu-card:active {
+  transform: translateY(0px);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
 }
 
-/* Cancel Button */
-button[type="button"] {
-  background-color: #e0e0e0;
-  color: #333;
-}
-
-button[type="button"]:hover {
-  background-color: #d1d1d1;
-}
-
-.form-actions {
+/* Left Pane */
+.left-pane {
+  width: 25%; /* 25% of the screen width */
+  height: 100vh; /* Full height */
   display: flex;
-  gap: 15px;
-  justify-content: flex-end;
-  margin-top: 20px;
-  grid-column: span 3; 
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-right: 1px solid #ddd;
+  position: fixed; /* Fix the menu on the left side */
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  z-index: 2; /* Ensure it is above other content */
+  overflow-y: auto;
+}
+
+.left-pane .menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  padding-top: 1rem;
+}
+
+/* Right Pane */
+.right-pane {
+  margin-left: 25%; /* Offset by the width of the left pane */
+  width: 75%; /* Occupy 75% of the width */
+  height: 100vh; /* Full height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+  background-color: #ffffff;
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  box-sizing: border-box;
+}
+
+.right-pane .grid-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Dynamic Form */
+.dynamic-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(163, 17, 17, 0.1);
+  width: 90%; /* Center form */
+  height: auto;
+  margin: auto; /* Center dynamically */
+}
+
+/* Form Modal */
+.form-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: all 0.5s ease;
+  z-index: 1000;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  border-radius: 8px;
+}
+
+.form-container.show {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .dynamic-form {
-    grid-template-columns: repeat(2, 1fr); 
-  }
-}
-
 @media (max-width: 768px) {
+  .container {
+    flex-direction: column; /* Stack panes vertically */
+  }
+
+  .left-pane,
+  .right-pane {
+    width: 100%; /* Full width */
+    margin-left: 0; /* No margin */
+    border-right: none; /* Remove border for mobile */
+  }
+
+  .menu-items {
+    width: 100%; /* Full width for menu items */
+    max-height: 70%; /* Fit within the left pane */
+  }
+
+  .right-pane .grid-container {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Make the dynamic form responsive */
   .dynamic-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* One column for mobile */
     padding: 15px;
   }
 
