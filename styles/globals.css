@@ -1,189 +1,220 @@
-/* General Reset to Normalize Styles */
-* {
+/* Global Styles */
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f9f9f9;
   margin: 0;
   padding: 0;
-  box-sizing: border-box; /* Ensure padding/margin is included in dimensions */
+  color: #333;
 }
 
-html, body {
-  width: 100vw; /* Full width of the viewport */
-  height: 100vh; /* Full height of the viewport */
-  overflow: hidden; /* Prevent scrollbars */
-  font-family: Arial, sans-serif;
-  transform: scale(1); /* Ensure no unintended zoom effects */
-}
-
-/* Root Container */
-.container {
+#dialog-edit-control-pane {
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  height: 100%;
-  background-color: #f9f9f9;
-  overflow: hidden;
+  justify-content: center;
+  padding: 30px 10px; /* Add extra space on top and bottom */
 }
 
-/* Menu Grid */
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 20px;
-  justify-items: center;
-  align-items: start;
+#dialog-edit-control-section {
   width: 100%;
-  height: 100%;
-}
-
-/* Menu Card */
-.menu-card {
+  max-width: 1200px;  /* Maintain a max width to avoid stretching */
   background-color: #ffffff;
-  border: 1px solid #e0e0e0;
   border-radius: 12px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
-  cursor: pointer;
-  text-align: center;
-  padding: 20px;
-  margin: 0; /* Remove additional margin */
-  width: 100%;
-  max-width: 300px; /* Restrict card size */
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
   overflow: hidden;
-}
-
-.menu-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 8px 16px rgba(0, 0, 255, 0.3);
-  border-color: #3a75b8;
-  background-color: #227dab;
-}
-
-.menu-card:active {
-  transform: translateY(0px);
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #ffffff;
-}
-
-/* Left Pane */
-.left-pane {
-  width: 25%; /* 25% of the screen width */
-  height: 100vh; /* Full height */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 1rem;
-  background-color: #f5f5f5;
-  border-right: 1px solid #ddd;
-  position: fixed; /* Fix the menu on the left side */
-  top: 0;
-  left: 0;
-  box-sizing: border-box;
-  z-index: 2; /* Ensure it is above other content */
-  overflow-y: auto;
-}
-
-.left-pane .menu-items {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  padding-top: 1rem;
-}
-
-/* Right Pane */
-.right-pane {
-  margin-left: 25%; /* Offset by the width of the left pane */
-  width: 75%; /* Occupy 75% of the width */
-  height: 100vh; /* Full height */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 1rem;
-  background-color: #ffffff;
-  overflow-y: auto; /* Allow scrolling if content overflows */
-  box-sizing: border-box;
-}
-
-.right-pane .grid-container {
-  width: 100%;
-  height: 100%;
-}
-
-/* Dynamic Form */
-.dynamic-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  background-color: #ffffff;
   padding: 20px;
+}
+
+/* Syncfusion Grid Styles */
+.e-grid {
+  border: none;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(163, 17, 17, 0.1);
-  width: 90%; /* Center form */
-  height: auto;
-  margin: auto; /* Center dynamically */
+  margin: 0;
+  padding: 0;
 }
 
-/* Form Modal */
-.form-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  transition: all 0.5s ease;
-  z-index: 1000;
-  background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 30px;
+.e-gridheader {
+  background-color: #0078d4;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.e-headercell {
+  padding: 12px 15px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.e-gridcontent {
+  padding: 20px 0;
+}
+
+.e-rowcell {
+  padding: 12px 15px;
+  text-align: center;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0; /* Light gray border between rows */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+.e-rowcell:hover {
+  background-color: #e9f1ff; /* Soft highlight on hover */
+}
+
+/* Row hover effect */
+.e-rowcell:focus {
+  background-color: #e0f7fa;
+  outline: none;
+}
+
+/* Toolbar Styles */
+.e-toolbar {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  padding: 15px;
+}
+
+.e-toolbar .e-btn {
+  background-color: #0078d4;
+  color: white;
   border-radius: 8px;
+  font-size: 14px;
+  padding: 8px 14px;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.form-container.show {
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 1;
+.e-toolbar .e-btn:hover {
+  background-color: #005a9e;
+  transform: translateY(-2px); /* Slight upward movement on hover */
 }
 
-/* Responsive Design */
+.e-toolbar .e-btn:focus {
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.4);
+}
+
+/* Paging Styles */
+.e-pager {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.e-pager .e-btn {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 6px 12px;
+  margin: 0 6px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.e-pager .e-btn:hover {
+  background-color: #0078d4;
+  color: white;
+}
+
+/* Dialog Styles */
+.e-dialog .e-dlg-header {
+  background-color: #0078d4;
+  color: white;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0; /* Rounded top corners */
+}
+
+.e-dialog .e-dlg-content {
+  padding: 20px;
+}
+
+.e-dialog .e-btn {
+  background-color: #0078d4;
+  color: white;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 8px 16px;
+  margin-right: 10px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.e-dialog .e-btn:hover {
+  background-color: #005a9e;
+  transform: translateY(-2px); /* Hover effect for buttons */
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+  #dialog-edit-control-pane {
+    padding: 20px;
+  }
+
+  #dialog-edit-control-section {
+    padding: 10px;
+  }
+
+  .e-rowcell, .e-headercell {
+    padding: 8px 10px; /* Reduced padding on smaller screens */
+  }
+
+  .e-toolbar .e-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .e-pager .e-btn {
+    padding: 6px 10px;
+  }
+}
+
 @media (max-width: 768px) {
-  .container {
-    flex-direction: column; /* Stack panes vertically */
+  .e-rowcell, .e-headercell {
+    font-size: 12px;
+    padding: 6px 8px;
   }
 
-  .left-pane,
-  .right-pane {
-    width: 100%; /* Full width */
-    margin-left: 0; /* No margin */
-    border-right: none; /* Remove border for mobile */
+  .e-toolbar .e-btn {
+    font-size: 12px;
+    padding: 4px 8px;
   }
 
-  .menu-items {
-    width: 100%; /* Full width for menu items */
-    max-height: 70%; /* Fit within the left pane */
+  .e-pager .e-btn {
+    font-size: 12px;
+    padding: 4px 8px;
   }
 
-  .right-pane .grid-container {
+  .e-gridheader, .e-rowcell {
+    text-align: left; /* Align text to the left for better readability */
+  }
+}
+
+@media (max-width: 480px) {
+  #dialog-edit-control-pane {
+    padding: 10px;
+  }
+
+  #dialog-edit-control-section {
     width: 100%;
-    height: auto;
+    padding: 8px;
   }
 
-  /* Make the dynamic form responsive */
-  .dynamic-form {
-    grid-template-columns: 1fr; /* One column for mobile */
-    padding: 15px;
+  .e-headercell, .e-rowcell {
+    font-size: 10px;
+    padding: 5px 8px;
   }
 
-  input, textarea, select {
-    font-size: 16px;
+  .e-toolbar .e-btn {
+    font-size: 12px;
+    padding: 4px 8px;
   }
 
-  button {
-    font-size: 16px;
+  .e-pager .e-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .e-gridheader {
+    font-size: 14px;
   }
 }
