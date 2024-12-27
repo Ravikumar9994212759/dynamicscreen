@@ -1,81 +1,80 @@
+// pages/index.js or components/Page.js
 'use client';
 import * as React from 'react';
-import {
-  GridComponent,
-  ColumnsDirective,
-  ColumnDirective,
-  Page,
-  Toolbar,
-  Edit,
-  Inject,
-  Sort,
-  Filter,
-  FilterSettingsModel,
-  EditSettingsModel
-} from '@syncfusion/ej2-react-grids';
+import { GridComponent, ColumnsDirective, ColumnDirective, Edit, Toolbar, Inject } from '@syncfusion/ej2-react-grids';
+import { data } from '../components/datasource'; // Import data for grid
+import { DialogFormTemplate } from '../components/DialogFormTemplate'; // Import dialog form
 
-export const data = [
-  { OrderID: 10248, CustomerName: "Paul Henriot", Freight: 32.38, OrderDate: new Date(2023, 10, 1), ShipCountry: "France" },
-  { OrderID: 10249, CustomerName: "Victor E.", Freight: 11.61, OrderDate: new Date(2023, 10, 2), ShipCountry: "Germany" },
-  { OrderID: 10250, CustomerName: "Maria Anders", Freight: 65.13, OrderDate: new Date(2023, 10, 3), ShipCountry: "Mexico" },
-  { OrderID: 10251, CustomerName: "Antonio Moreno", Freight: 58.52, OrderDate: new Date(2023, 10, 4), ShipCountry: "Spain" },
-  { OrderID: 10252, CustomerName: "Thomas Hardy", Freight: 17.32, OrderDate: new Date(2023, 10, 5), ShipCountry: "UK" }
-];
-
-const columnConfig = [
-  { field: "OrderID", headerText: "Order ID", width: 120, textAlign: "Right", validationRules: { required: true, number: true }, isPrimaryKey: true },
-  { field: "CustomerName", headerText: "Customer Name", width: 150, validationRules: { required: true } },
-  { field: "Freight", headerText: "Freight", width: 120, format: "C2", textAlign: "Right", editType: "numericedit" },
-  { field: "OrderDate", headerText: "Order Date", editType: "datepickeredit", format: "yMd", width: 170 },
-  { field: "ShipCountry", headerText: "Ship Country", width: 150, editType: "dropdownedit", edit: { params: { popupHeight: '300px' } } }
-];
-
-function DialogEdit() {
+export default function Page() {
+  const [isLoading, setIsLoading] = React.useState(true);
   const toolbarOptions = ['Add', 'Edit', 'Delete'];
-  
-  const filterSettings: FilterSettingsModel = { type: 'Excel' as 'Excel' };
-  
-  const editSettings: EditSettingsModel = { 
-    allowEditing: true, 
-    allowAdding: true, 
-    allowDeleting: true, 
-    mode: 'Dialog' as 'Dialog' // Dialog mode should be triggered only after specific actions like Add or Edit
+  const rules = { required: true };
+  let grid;
+
+  const dialogTemplate = (props) => {
+    return <DialogFormTemplate {...props} grid={grid} />;
   };
 
-  const pageSettings = { pageCount: 5 };
+  const editOption = {
+    allowEditing: true,
+    allowAdding: true,
+    allowDeleting: true,
+    mode: 'Dialog',
+    template: dialogTemplate,
+  };
 
-  // To prevent auto-opening of dialog on refresh
-  const [dialogVisible, setDialogVisible] = React.useState(false);
+  const actionComplete = (args) => {
+    if (args.requestType === 'beginEdit' || args.requestType === 'add') {
+      args.form.ej2_instances[0].rules = {}; // Disable default validation
+      args.dialog.element
+        .querySelector('.e-footer-content')
+        .classList.add('e-hide');
+
+      setTimeout(() => {
+        const customerIDInput = args.form.elements.namedItem('CustomerID');
+        if (customerIDInput) {
+          customerIDInput.focus();
+        }
+      }, 0);
+    }
+  };
 
   React.useEffect(() => {
-    // Reset any state on page load (in case dialog is opened automatically)
-    setDialogVisible(false);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // Simulate data fetching
   }, []);
 
   return (
-    <div id="dialog-edit-control-pane" className="control-pane">
-      <div id="dialog-edit-control-section" className="control-section">
+    <div>
+      {isLoading ? (
+        <div id="loader" style={{ color: '#008cff', height: '140px', left: '45%', position: 'absolute', top: '45%', width: '30%' }}>
+          Loading....
+        </div>
+      ) : (
         <GridComponent
-          id="grid-component"
+          ref={(g) => (grid = g)}
           dataSource={data}
+          actionComplete={actionComplete}
+          editSettings={editOption}
           toolbar={toolbarOptions}
-          allowPaging={true}
-          allowSorting={true}
-          allowFiltering={true}
-          filterSettings={filterSettings}
-          editSettings={editSettings}
-          pageSettings={pageSettings}
+          height={265}
         >
           <ColumnsDirective>
-            {columnConfig.map((col, index) => (
-              <ColumnDirective key={index} {...col} />
-            ))}
+            <ColumnDirective
+              field="OrderID"
+              headerText="Order ID"
+              width="100"
+              textAlign="Right"
+              isPrimaryKey={true}
+              validationRules={rules}
+            />
+            <ColumnDirective field="CustomerID" headerText="Customer ID" width="120" validationRules={rules} />
+            <ColumnDirective field="ShipCountry" headerText="Ship Country" width="150" />
           </ColumnsDirective>
-          <Inject services={[Page, Toolbar, Edit, Sort, Filter]} />
+          <Inject services={[Edit, Toolbar]} />
         </GridComponent>
-      </div>
+      )}
     </div>
   );
 }
-
-export default DialogEdit;
