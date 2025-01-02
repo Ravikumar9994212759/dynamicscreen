@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GridComponent, ColumnsDirective, ColumnDirective, Edit, Toolbar, Inject, Page, Sort, Filter } from '@syncfusion/ej2-react-grids';
+import useSWR from 'swr';
 import { DialogFormTemplate } from '../components/DialogFormTemplate'; // Import the DialogFormTemplate
-
+import supabase from '../lib/supabase';
 // Define the type for each column
 interface Column {
   field: string;
@@ -21,22 +22,29 @@ interface FieldConfig {
   gridShow?: boolean;  // Whether the field should be displayed in the grid
 }
 
-// Define the structure for initialData prop (Array of FieldConfig)
 interface NormalEditProps {
-  initialData: FieldConfig[];
-  menus: any; // Replace `any` with the actual type if needed
+  initialData: FieldConfig[];  // This comes from getServerSideProps
 }
 
-const NormalEdit: React.FC<NormalEditProps> = ({ initialData, menus }) => {
+const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
   const [data, setData] = useState<any[]>([]);  // Data state
   const [columns, setColumns] = useState<Column[]>([]);  // Columns state
   const [isLoading, setIsLoading] = useState(true);  // Loading state
 
-  const grid = useRef(null);  // Grid reference
+  const grid = useRef<any>(null);  // Grid reference
   const toolbarOptions = ['Add', 'Edit', 'Delete', 'Search']; // Toolbar options
   const pageSettings = { pageSize: 10 }; // Page settings
 
-  // Simulate fetching the columns and data
+  // Use SWR to fetch live data for real-time updates
+  const { data: liveData, error } = useSWR('materials', async () => {
+    const { data, error } = await supabase.from('materials').select('*');
+    if (error) throw new Error(error.message);
+    return data;
+  }, {
+    refreshInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Set initial data (fetched from getServerSideProps)
   useEffect(() => {
     if (initialData && initialData.length > 0) {
       setData(initialData);
@@ -53,6 +61,10 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData, menus }) => {
     }
   }, [initialData]);
 
+  // If SWR is loading or an error occurred
+  if (!liveData && isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading live data</div>;
+
   // Map initialData to fields for DialogFormTemplate (includes dynamic configurations)
   const getFieldsFromColumns = () => {
     return initialData.map(field => ({
@@ -68,7 +80,7 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData, menus }) => {
 
   const dialogTemplate = (props: any) => {
     const fields = getFieldsFromColumns(); // Map columns to fields
-    return <DialogFormTemplate {...props} grid={grid.current} fields={fields} />;
+    return <DialogFormTemplate {...props} fields={fields} />;
   };
 
   const editOption = {
@@ -102,7 +114,7 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData, menus }) => {
       ) : (
         <GridComponent
           ref={grid}
-          dataSource={data} // Use the 'data' state here
+          dataSource={liveData || data} // Use live data from SWR if available, otherwise fallback to initial data
           actionComplete={actionComplete}
           editSettings={editOption}
           toolbar={toolbarOptions}
@@ -123,5 +135,28 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData, menus }) => {
     </div>
   );
 };
+
+// Fetch initial data from Supabase in getServerSideProps
+export async function getServerSideProps() {
+  // Fetch data from Supabase for initial load (e.g., get the field configuration)
+  const { data, error } = await supabase.from('materials').select('*'); // Query your materials table
+  if (error) {
+    return { notFound: true };
+  }
+
+  const initialData = data.map((item: any) => ({
+    name: item.name,
+    label: item.label,
+    inputType: item.input_type, // Adjust according to your Supabase schema
+    dataType: item.data_type,
+    gridShow: item.grid_show !== undefined ? item.grid_show : true
+  }));
+
+  return {
+    props: {
+      initialData
+    }
+  };
+}
 
 export default NormalEdit;
