@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import '../styles/globals.css'; // Your global styles
 import Layout from './../components/Layout'; // Assuming this is your layout component
+
 // Syncfusion Styles
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-buttons/styles/material.css';
@@ -50,7 +51,9 @@ function MyApp({ Component, pageProps }) {
   return (
     <Layout>
       {/* Loader element */}
-      <div id="loader" style={{ display: 'none' }}>Loading...</div>
+      <div id="loader" style={{ display: 'none', position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+        Loading...
+      </div>
 
       {/* Main content */}
       <Component {...pageProps} />

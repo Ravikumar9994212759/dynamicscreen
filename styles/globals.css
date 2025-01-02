@@ -251,7 +251,7 @@ body {
 
 
 .e-control{
-  max-height: 680px !important;
+  max-height: 555px !important;
 }
 
 .form-container{
@@ -264,13 +264,13 @@ body {
 }
 
 .e-dialog .e-dlg-header-content{
-  padding: 4px !important;
+  padding: 1px !important;
     margin-top:22px !important;
-    line-height: 16px !important;
+    line-height: 1px !important;
 }
 
 h2{
-      margin-top: 6px !important;
+      margin-top: 1px !important;
      margin-bottom: 0px !important;
 } 
 
@@ -282,4 +282,14 @@ h2{
   overflow-y: hidden !important;
   overflow-x: hidden !important;
 } */
+/* Header styling for "Site form" */
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: #4476c0; /* Match the blue background color */
+  color: #ffffff; /* White text */
+  padding: 05px 20px; /* Add padding for spacing */
+  border-radius: 6px; /* Rounded corners */
+  font-size: 20px; /* Adjust font size */
+}
 
