@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GridComponent, ColumnsDirective, ColumnDirective, Edit, Toolbar, Inject, Page, Sort, Filter } from '@syncfusion/ej2-react-grids';
+import {
+  FilterSettingsModel,FilterType, GridComponent, ColumnsDirective, ColumnDirective, Edit, Toolbar, Inject, Page, Sort, Filter, PdfExport, ExcelExport
+} from '@syncfusion/ej2-react-grids';
 import useSWR from 'swr';
-import { DialogFormTemplate } from '../components/DialogFormTemplate'; // Import the DialogFormTemplate
+import { DialogFormTemplate } from '../components/DialogFormTemplate';
 import supabase from '../lib/supabase';
-// Define the type for each column
+import { setCulture, setCurrencyCode, loadCldr } from '@syncfusion/ej2-base';
+import { ButtonComponent } from '@syncfusion/ej2-react-buttons';
+
+import cagregorian from './ca-gregorian.json';
+import currencies from './currencies.json';
+import numbers from './numbers.json';
+import timeZoneNames from './timeZoneNames.json';
+import numberingSystems from './numberingSystems.json';
+
 interface Column {
   field: string;
   headerText: string;
@@ -11,75 +21,120 @@ interface Column {
   textAlign: string;
 }
 
-// Define the structure of each field (based on dynamic data)
 interface FieldConfig {
   name: string;
   label: string;
-  inputType?: 'textbox' | 'numeric' | 'dropdown' | 'textarea' | 'datetime' | 'checkbox'; // Dynamic input type
-  dataType?: 'String' | 'Integer' | 'Boolean';  // Dynamic data type
-  limit?: number;  // Optional limit (e.g., max length)
-  default?: string | boolean | number;  // Default value for the field
-  gridShow?: boolean;  // Whether the field should be displayed in the grid
+  inputType?: 'textbox' | 'numeric' | 'dropdown' | 'textarea' | 'datetime' | 'checkbox'; 
+  dataType?: 'String' | 'Integer' | 'Boolean';
+  limit?: number;
+  default?: string | boolean | number;
+  gridShow?: boolean;
 }
 
 interface NormalEditProps {
-  initialData: FieldConfig[];  // This comes from getServerSideProps
+  initialData: FieldConfig[];
 }
 
 const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
-  const [data, setData] = useState<any[]>([]);  // Data state
-  const [columns, setColumns] = useState<Column[]>([]);  // Columns state
-  const [isLoading, setIsLoading] = useState(true);  // Loading state
+  const [data, setData] = useState<any[]>([]);
+  const [columns, setColumns] = useState<Column[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [locale, setLocale] = useState('en-US');
+  const grid = useRef<any>(null);
+  const toolbarOptions = ['Add', 'Edit', 'Delete', 'Search', 'PdfExport', 'ExcelExport',];
+  const pageSettings = { pageSize: 5 };
 
-  const grid = useRef<any>(null);  // Grid reference
-  const toolbarOptions = ['Add', 'Edit', 'Delete', 'Search']; // Toolbar options
-  const pageSettings = { pageSize: 10 }; // Page settings
+  const toolbarClick = (args: any) => {
+    console.log('Toolbar item clicked:', args);
+    if (args.item.id.includes('pdfexport')) {
+      console.log('Exporting to PDF');
+      grid.current?.pdfExport();
+    }
+    else if (args.item.id.includes('excelexport')) {
+      console.log('Exporting to Excel');
+      grid.current?.excelExport();
+    }
+  };
+  const filterSettings: FilterSettingsModel = {
+    type: 'Menu' as FilterType,
+    columns: [] // You can set filter columns here if needed
+  };
 
-  // Use SWR to fetch live data for real-time updates
+  useEffect(() => {
+    const loadFilters = async () => {
+      const { data: filterData, error } = await supabase.from('materials').select('*');
+      if (error) {
+        console.error('Error loading filter data:', error);
+        return;
+      }
+      const filterValues = filterData.map(item => item.status);
+
+      filterSettings.columns = filterValues.map(value => ({
+        field: 'status',
+        operator: 'equal',
+        value: value,
+        predicate: 'or'
+      }));
+    };
+    loadFilters();
+  }, []);
+  // Fetch live data using SWR
   const { data: liveData, error } = useSWR('materials', async () => {
+    console.log('Fetching live data from Supabase...');
     const { data, error } = await supabase.from('materials').select('*');
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('Error fetching data from Supabase:', error);
+      throw new Error(error.message);
+    }
     return data;
+    console.log('useSWRFetching live data from Supabase...'+data);
   }, {
-    refreshInterval: 5000, // Refresh every 5 seconds
+    refreshInterval: 5000, // Fetch every 5 seconds
   });
 
-  // Set initial data (fetched from getServerSideProps)
   useEffect(() => {
+    console.log('Effect triggered, checking initialData:', initialData);
+
     if (initialData && initialData.length > 0) {
       setData(initialData);
 
-      // Example columns data based on initialData. Adjust as needed.
       const columns = initialData.map(field => ({
         field: field.name,
         headerText: field.label,
         width: '100',
         textAlign: 'Left'
       }));
+      console.log('Columns set:', columns);
       setColumns(columns);
-      setIsLoading(false);  // Data is loaded, no longer in loading state
+      setIsLoading(false);
     }
   }, [initialData]);
 
-  // If SWR is loading or an error occurred
-  if (!liveData && isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading live data</div>;
+  if (!liveData && isLoading) {
+    console.log('Data is still loading...');
+    return <div>Loading...</div>;
+  }
+  if (error) {
+    console.error('Error loading live data:', error);
+    return <div>Error loading live data</div>;
+  }
 
-  // Map initialData to fields for DialogFormTemplate (includes dynamic configurations)
   const getFieldsFromColumns = () => {
+    console.log('Mapping fields from columns:', initialData);
     return initialData.map(field => ({
       name: field.name,
       label: field.label,
-      inputType: field.inputType || 'textbox',  // Default to 'textbox' if no inputType is defined
-      dataType: field.dataType || 'String',    // Default to 'String' if no dataType is defined
-      limit: field.limit || 50,                // Default to 50 if limit is not defined
-      default: field.default || '',            // Default to empty string if no default value is defined
-      gridShow: field.gridShow !== undefined ? field.gridShow : true // Default to true if gridShow is undefined
+      inputType: field.inputType || 'textbox',
+      dataType: field.dataType || 'String',
+      limit: field.limit || 50,
+      default: field.default || '',
+      gridShow: field.gridShow !== undefined ? field.gridShow : true
     }));
   };
 
   const dialogTemplate = (props: any) => {
-    const fields = getFieldsFromColumns(); // Map columns to fields
+    console.log('Rendering Dialog Form Template with props:', props);
+    const fields = getFieldsFromColumns();
     return <DialogFormTemplate {...props} fields={fields} />;
   };
 
@@ -91,8 +146,43 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
     template: dialogTemplate,
   };
 
+  const changeFrLocale = () => {
+    console.log('Changing locale to French (fr-FR)');
+    setCulture('fr-FR');
+    setCurrencyCode('EUR');
+    setLocale('fr-FR'); 
+    loadCldr(
+      cagregorian,
+      currencies,
+      numbers,
+      timeZoneNames,
+      numberingSystems
+    );    
+    };
+
+    const created = () => {
+      if (grid.current) {
+        const searchbar = document.getElementById(grid.current.element.id + '_searchbar');
+        if (searchbar) {
+          searchbar.addEventListener('keyup', (event) => {
+            if (grid.current) {
+              grid.current.search((event.target as HTMLInputElement).value);
+            }
+          });
+        }
+      }
+    };
+  const changeEnLocale = () => {
+    console.log('Changing locale to English (en-US)');
+    setCulture('en-US');
+    setCurrencyCode('USD');
+    setLocale('en-US');
+  };
+
   const actionComplete = (args: any) => {
+    console.log('Action completed:', args);
     if (args.requestType === 'beginEdit' || args.requestType === 'add') {
+      console.log('Editing or adding a record');
       args.form.ej2_instances[0].rules = {};
       args.dialog.element
         .querySelector('.e-footer-content')
@@ -100,6 +190,7 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
       setTimeout(() => {
         const customerIDInput = args.form.elements.namedItem('CustomerID');
         if (customerIDInput) {
+          console.log('Focusing on CustomerID input');
           customerIDInput.focus();
         }
       }, 0);
@@ -108,13 +199,21 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
 
   return (
     <div>
-      {/* Show loading state if columns or data are not available */}
+    <ButtonComponent locale="fr-FR" cssClass="e-outline" id="frButton" onClick={changeFrLocale}>
+  Change FR Locale
+</ButtonComponent>
+
+      <ButtonComponent cssClass="e-outline" id="enButton" style={{ marginLeft: "10px" }} onClick={changeEnLocale}>
+        Change EN Locale
+      </ButtonComponent>
+
       {isLoading ? (
         <div>Loading data...</div>
       ) : (
         <GridComponent
           ref={grid}
-          dataSource={liveData || data} // Use live data from SWR if available, otherwise fallback to initial data
+          locale={locale }
+          dataSource={liveData || data}
           actionComplete={actionComplete}
           editSettings={editOption}
           toolbar={toolbarOptions}
@@ -122,35 +221,42 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
           pageSettings={pageSettings}
           allowSorting={true}
           allowFiltering={true}
+          filterSettings={filterSettings}
           height={265}
+          allowPdfExport={true}
+          toolbarClick={toolbarClick}
+          allowExcelExport={true}
+          created={created}
         >
           <ColumnsDirective>
             {columns.map((col, index) => (
               <ColumnDirective key={index} {...col} />
             ))}
           </ColumnsDirective>
-          <Inject services={[Edit, Toolbar, Page, Sort, Filter]} />
+          <Inject services={[Edit, Toolbar, Page, Sort, Filter, PdfExport, ExcelExport]} />
         </GridComponent>
       )}
     </div>
   );
 };
 
-// Fetch initial data from Supabase in getServerSideProps
 export async function getServerSideProps() {
-  // Fetch data from Supabase for initial load (e.g., get the field configuration)
-  const { data, error } = await supabase.from('materials').select('*'); // Query your materials table
+  console.log('Fetching initial data from server...');
+  const { data, error } = await supabase.from('materials').select('*');
   if (error) {
+    console.error('Error fetching initial data:', error);
     return { notFound: true };
   }
 
   const initialData = data.map((item: any) => ({
     name: item.name,
     label: item.label,
-    inputType: item.input_type, // Adjust according to your Supabase schema
+    inputType: item.input_type,
     dataType: item.data_type,
     gridShow: item.grid_show !== undefined ? item.grid_show : true
   }));
+
+  console.log('Initial data fetched:', initialData);
 
   return {
     props: {

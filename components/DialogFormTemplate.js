@@ -3,7 +3,6 @@ import { CheckBoxComponent } from '@syncfusion/ej2-react-buttons';
 import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
 import { NumericTextBoxComponent } from '@syncfusion/ej2-react-inputs';
 
-// Helper function to render each field dynamically
 const renderInputField = (field, state, onChange) => {
   const { name, label, dataType, inputType, default: defaultValue } = field;
   const commonProps = {
@@ -86,7 +85,6 @@ export function DialogFormTemplate({ fields, ...props }) {
   const [state, setState] = useState({ ...props });
   const [showSidebar, setShowSidebar] = useState(false);
 
-  // Generalized onChange handler to handle all input types
   const onChange = useCallback((value, name) => {
     setState((prevState) => ({
       ...prevState,
@@ -105,28 +103,25 @@ export function DialogFormTemplate({ fields, ...props }) {
         ))}
       </div>
 
-      {/* Button to open sidebar */}
       <div id="footer" style={{ textAlign: 'center', marginTop: '20px' }}>
         <button
           className="e-info e-btn"
           type="button"
-          onClick={() => setShowSidebar(true)} // Open sidebar
+          onClick={() => setShowSidebar(true)} 
           style={buttonStyle}
         >
           Add Site
         </button>
       </div>
 
-      {/* Sidebar for adding another form */}
       {showSidebar && (
         <div id="sidebar" style={sidebarStyle}>
           <h2 className="sidebar-header" style={{ textAlign: 'center' }}>Site Form</h2>
           <div className="form-container" style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-            {/* Render sidebar form */}
             {fields.map((field, index) => renderInputField(field, state, onChange))}
           </div>
           <button
-            onClick={() => setShowSidebar(false)} // Close sidebar
+            onClick={() => setShowSidebar(false)} 
             style={saveButtonStyle}
           >
             Save & Continue
@@ -137,7 +132,6 @@ export function DialogFormTemplate({ fields, ...props }) {
   );
 }
 
-// Styles (Could be in a CSS or Styled-Components file)
 const buttonStyle = {
   backgroundColor: '#396ab3',
   color: '#fff',

@@ -14,11 +14,21 @@ import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-splitbuttons/styles/material.css';
 import '@syncfusion/ej2-react-grids/styles/material.css';
 
+
+
+// Syncfusion Localization
+import { L10n, setCulture, setCurrencyCode, loadCldr } from '@syncfusion/ej2-base';
+import frFRLocalization from '../components/locale.json'; 
+import cagregorian from '../components/ca-gregorian.json';
+import currencies from '../components/currencies.json';
+import numbers from '../components/numbers.json';
+import timeZoneNames from '../components/timeZoneNames.json';
+import numberingSystems from '../components/numberingSystems.json';
+
 function MyApp({ Component, pageProps }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Handle route changes to show the loader
   useEffect(() => {
     const handleRouteChange = () => {
       setLoading(true);
@@ -34,6 +44,29 @@ function MyApp({ Component, pageProps }) {
       setLoading(false);
       document.getElementById('loader').style.display = 'none'; // Hide loader on error
     };
+
+    // Syncfusion localization setup
+    const setupLocalization = () => {
+      setCulture('fr-FR');
+      setCurrencyCode('EUR'); // Set currency to Euro for French locale
+
+      // Load Syncfusion's calendar and number data (required for full localization support)
+      loadCldr(
+        cagregorian,
+        currencies,
+        numbers,
+        timeZoneNames,
+        numberingSystems
+      );
+
+      L10n.load({
+        'fr-FR': frFRLocalization['fr-FR'],
+      });
+
+      console.log('Syncfusion French localization applied.');
+    };
+
+    setupLocalization();
 
     // Subscribe to route change events
     router.events.on('routeChangeStart', handleRouteChange);
@@ -51,7 +84,16 @@ function MyApp({ Component, pageProps }) {
   return (
     <Layout>
       {/* Loader element */}
-      <div id="loader" style={{ display: 'none', position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+      <div
+        id="loader"
+        style={{
+          display: 'none',
+          position: 'fixed',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
         Loading...
       </div>
 
