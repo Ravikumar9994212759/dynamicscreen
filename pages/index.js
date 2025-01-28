@@ -1,40 +1,69 @@
-// pages/index.js
-import { registerLicense } from '@syncfusion/ej2-base';
-import GridPage from '../components/NormalEdit';  
-import supabase from '../lib/supabase';  
+//pages/index.js
 
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWH1cc3RTRWFYVkV0W0c=');
+import { registerLicense } from "@syncfusion/ej2-base";
+import GridListContainer from "../components/GridListContainer";
 
-export default function Home({ initialData, menus }) {
+// Register Syncfusion license
+registerLicense("Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWH1cc3RTRWFYVkV0W0c=");
+
+export default function Home({ menuDataSource, initialData, form2 }) {
   return (
     <div>
-      <h1>Syncfusion DataGrid in Next.js</h1>
-      <GridPage initialData={initialData} menus={menus} />
+      {/* <h1>Syncfusion List and Data Grid Integration in Next.js</h1> */}
+      <GridListContainer 
+     // initialDataSource={initialDataSource}
+     menuDataSource={menuDataSource} 
+       initialData={initialData} form2={form2} />
     </div>
   );
 }
 
+// Use getStaticProps to fetch data at build time
 export async function getStaticProps() {
   try {
 
-    const { data: inventoryMaster, error: formError } = await supabase
-      .from('inventoryMaster')
-      .select('formJson')
-      .eq('nprimarykey', 1);  
-    if (formError) {
-      console.error('Error fetching data:', menuError?.message, formError?.message);
-      return { props: { menus: [], initialData: [] } };
-    }
+        // Menu data
+    const menuRes = await fetch("http://localhost:9356/QuaLIS/invoicecustomermaster/getmenuslist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
 
-    const initialData = inventoryMaster?.[0]?.formJson?.fields || [];  
+
+    // ListView component
+    // const listRes = await fetch("http://localhost:9356/QuaLIS/invoicecustomermaster/getlistview", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({}),
+    // });
+    
+    //  Data Grid component
+    const gridRes = await fetch("http://localhost:9356/QuaLIS/invoicecustomermaster/getinventorymaster", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestData: { field1: "value1", field2: "value2" } }),
+    });
+    const menuData = menuRes.ok ? await menuRes.json() : [];
+   // const listData = listRes.ok ? await listRes.json() : [];
+    const gridData = gridRes.ok ? await gridRes.json() : { form1: [], form2: [] };
+
     return {
       props: {
-        initialData: initialData,    
+        menuDataSource: Array.isArray(menuData) ? menuData : [],
+        //initialDataSource: Array.isArray(listData) ? listData : [],
+        initialData: gridData.form1 || [],
+        form2: gridData.form2 || [],
       },
-      revalidate: 10, 
+     // revalidate: 10, 
     };
   } catch (error) {
-    console.error('Error in getStaticProps:', error);
-    return { props: { initialData: [] } };  
+    console.error("Error fetching data:", error);
+    return {
+      props: {
+        initialDataSource: [],
+        initialData: [],
+        form2: [],
+      },
+    };
   }
 }

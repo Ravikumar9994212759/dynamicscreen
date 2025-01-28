@@ -6,7 +6,7 @@ module.exports = {
   async headers() {
     return [
       {
-        source: '/nested/:slug*/',
+        source: '/nested/:menuId*/',
         headers: [
           {
             key: 'Cache-Control',

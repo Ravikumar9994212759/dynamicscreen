@@ -1,18 +1,21 @@
+//NoramEdit.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  FilterSettingsModel,FilterType, GridComponent, ColumnsDirective, ColumnDirective, Edit, Toolbar, Inject, Page, Sort, Filter, PdfExport, ExcelExport
-} from '@syncfusion/ej2-react-grids';
+import { FilterSettingsModel, FilterType, GridComponent, ColumnsDirective, ColumnDirective, Edit, Toolbar, Inject, Page, Sort, Filter, PdfExport, ExcelExport, Resize } from '@syncfusion/ej2-react-grids';
 import useSWR from 'swr';
 import { DialogFormTemplate } from '../components/DialogFormTemplate';
-import supabase from '../lib/supabase';
 import { setCulture, setCurrencyCode, loadCldr } from '@syncfusion/ej2-base';
 import { ButtonComponent } from '@syncfusion/ej2-react-buttons';
-
+import { GetServerSideProps } from 'next';
 import cagregorian from './ca-gregorian.json';
 import currencies from './currencies.json';
 import numbers from './numbers.json';
 import timeZoneNames from './timeZoneNames.json';
 import numberingSystems from './numberingSystems.json';
+import { EditSettingsModel } from '@syncfusion/ej2-react-grids'; // Import EditSettingsModel
+import { FaTrashAlt, FaRegEdit } from 'react-icons/fa'; // Font Awesome icons
+import { ToastComponent } from '@syncfusion/ej2-react-notifications';
+
 
 interface Column {
   field: string;
@@ -24,7 +27,7 @@ interface Column {
 interface FieldConfig {
   name: string;
   label: string;
-  inputType?: 'textbox' | 'numeric' | 'dropdown' | 'textarea' | 'datetime' | 'checkbox'; 
+  inputType?: 'textbox' | 'numeric' | 'dropdown' | 'textarea' | 'datetime' | 'checkbox';
   dataType?: 'String' | 'Integer' | 'Boolean';
   limit?: number;
   default?: string | boolean | number;
@@ -33,236 +36,360 @@ interface FieldConfig {
 
 interface NormalEditProps {
   initialData: FieldConfig[];
+  ssdata: Material[];  // Ensure ssdata is passed as a prop
+  form2: FieldConfig[];
 }
 
-const NormalEdit: React.FC<NormalEditProps> = ({ initialData }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [columns, setColumns] = useState<Column[]>([]);
+interface FilterValue {
+  status: string;
+}
+
+interface Material {
+  nid: string;
+  id: string;
+  field1: string;
+  field2: string;
+}
+
+const NormalEdit: React.FC<NormalEditProps> = ({ initialData, form2 }) => {
+  const [data, setData] = useState<Material[]>([]); 
+  const [columns, setColumns] = useState<Column[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [locale, setLocale] = useState('en-US');
+  const [error, setError] = useState<string | null>(null);
   const grid = useRef<any>(null);
-  const toolbarOptions = ['Add', 'Edit', 'Delete', 'Search', 'PdfExport', 'ExcelExport',];
-  const pageSettings = { pageSize: 5 };
+  const toolbarOptions = ['Add', 'Edit', 'Delete', 'Search', 'PdfExport', 'ExcelExport'];
+  const pageSettings = { pageSize: 10 };
+  const toastInstance = useRef<ToastComponent>(null); 
+
+
+  const toastCreated = () => {
+    console.log("Toast created");
+  };
 
   const toolbarClick = (args: any) => {
-    console.log('Toolbar item clicked:', args);
     if (args.item.id.includes('pdfexport')) {
-      console.log('Exporting to PDF');
       grid.current?.pdfExport();
-    }
-    else if (args.item.id.includes('excelexport')) {
-      console.log('Exporting to Excel');
+    } else if (args.item.id.includes('excelexport')) {
       grid.current?.excelExport();
     }
   };
+
   const filterSettings: FilterSettingsModel = {
     type: 'Menu' as FilterType,
-    columns: [] // You can set filter columns here if needed
+    //  columns: [],
   };
 
-  useEffect(() => {
-    const loadFilters = async () => {
-      const { data: filterData, error } = await supabase.from('materials').select('*');
-      if (error) {
-        console.error('Error loading filter data:', error);
-        return;
-      }
-      const filterValues = filterData.map(item => item.status);
+  // Fetch data from live API
+  const { data: liveData, error: liveDataError } = useSWR<Material[]>('http://localhost:9356/QuaLIS/invoicecustomermaster/getmaterialsdata', async () => {
+    const startTime = Date.now();
+    const res = await fetch('/api/materials');
+    if (!res.ok) throw new Error('Failed to fetch live data');
+    const endTime = Date.now(); 
+    const duration = endTime - startTime; 
+    toastInstance.current?.show({
+      title: 'Success',
+      content: `Initial get successfully! (Time: ${duration}ms)`,
+      showCloseButton: true,
+      timeOut: 5000, 
+    });
+    return res.json();
+  });
 
-      filterSettings.columns = filterValues.map(value => ({
-        field: 'status',
-        operator: 'equal',
-        value: value,
-        predicate: 'or'
-      }));
-    };
-    loadFilters();
-  }, []);
-  // Fetch live data using SWR
-  const { data: liveData, error } = useSWR('materials', async () => {
-    console.log('Fetching live data from Supabase...');
-    const { data, error } = await supabase.from('materials').select('*');
-    if (error) {
-      console.error('Error fetching data from Supabase:', error);
-      throw new Error(error.message);
-    }
-    return data;
-    console.log('useSWRFetching live data from Supabase...'+data);
-  }, {
-    refreshInterval: 5000, // Fetch every 5 seconds
+  // Fetch filter settings
+  const { data: filterValues, error: filterError } = useSWR<FilterValue[]>('/api/filter-settings', async () => {
+    const res = await fetch('/api/filter-settings');
+    if (!res.ok) throw new Error('Failed to fetch filter settings');
+    return res.json();
   });
 
   useEffect(() => {
-    console.log('Effect triggered, checking initialData:', initialData);
+    if (filterValues) {
+      filterSettings.columns = filterValues.map(value => ({
+        field: 'status',
+        operator: 'equal',
+        value: value.status,
+        predicate: 'or',
+      }));
+    }
+  }, [filterValues]);
 
-    if (initialData && initialData.length > 0) {
-      setData(initialData);
+  useEffect(() => {
+    if (initialData.length > 0) {
+      const transformedData: Material[] = initialData.map((field, index) => ({
+        id: `${index}`, // Assuming 'id' is unique for each row
+        nid: `${field.name}-${index}`,
+        field1: field.name,
+        field2: field.label, 
+      }));
 
-      const columns = initialData.map(field => ({
+      setData(transformedData);
+      setColumns(initialData.map(field => ({
         field: field.name,
         headerText: field.label,
         width: '100',
-        textAlign: 'Left'
-      }));
-      console.log('Columns set:', columns);
-      setColumns(columns);
+        textAlign: 'Left',
+      })));
       setIsLoading(false);
     }
   }, [initialData]);
 
-  if (!liveData && isLoading) {
-    console.log('Data is still loading...');
-    return <div>Loading...</div>;
-  }
-  if (error) {
-    console.error('Error loading live data:', error);
-    return <div>Error loading live data</div>;
+  useEffect(() => {
+    if (liveData) {
+      setIsLoading(false);
+    }
+  }, [liveData]);
+
+  if (isLoading || liveDataError || filterError) {
+    return <div>Loading data...</div>;
   }
 
-  const getFieldsFromColumns = () => {
-    console.log('Mapping fields from columns:', initialData);
-    return initialData.map(field => ({
-      name: field.name,
-      label: field.label,
-      inputType: field.inputType || 'textbox',
-      dataType: field.dataType || 'String',
-      limit: field.limit || 50,
-      default: field.default || '',
-      gridShow: field.gridShow !== undefined ? field.gridShow : true
-    }));
-  };
+  const getFieldsFromColumns = () => initialData.map(field => ({
+    name: field.name,
+    label: field.label,
+    inputType: field.inputType || 'textbox',
+    dataType: field.dataType || 'String',
+    limit: field.limit || 50,
+    default: field.default || '',
+    gridShow: field.gridShow !== undefined ? field.gridShow : true
+  }));
 
   const dialogTemplate = (props: any) => {
-    console.log('Rendering Dialog Form Template with props:', props);
     const fields = getFieldsFromColumns();
-    return <DialogFormTemplate {...props} fields={fields} />;
+    return <DialogFormTemplate {...props} fields={fields} form2={form2} />;
   };
 
-  const editOption = {
+  const editOption: EditSettingsModel = {
     allowEditing: true,
     allowAdding: true,
     allowDeleting: true,
-    mode: 'Dialog',
+    mode: 'Dialog',  
     template: dialogTemplate,
   };
 
+  const created = () => {
+    if (grid.current) {
+      const searchbar = document.getElementById(grid.current.element.id + '_searchbar');
+      if (searchbar) {
+        searchbar.addEventListener('keyup', (event) => {
+          if (grid.current) {
+            grid.current.search((event.target as HTMLInputElement).value);
+          }
+        });
+      }
+    }
+  };
+
   const changeFrLocale = () => {
-    console.log('Changing locale to French (fr-FR)');
     setCulture('fr-FR');
     setCurrencyCode('EUR');
-    setLocale('fr-FR'); 
-    loadCldr(
-      cagregorian,
-      currencies,
-      numbers,
-      timeZoneNames,
-      numberingSystems
-    );    
-    };
+    setLocale('fr-FR');
+    loadCldr(cagregorian, currencies, numbers, timeZoneNames, numberingSystems);
+  };
 
-    const created = () => {
-      if (grid.current) {
-        const searchbar = document.getElementById(grid.current.element.id + '_searchbar');
-        if (searchbar) {
-          searchbar.addEventListener('keyup', (event) => {
-            if (grid.current) {
-              grid.current.search((event.target as HTMLInputElement).value);
-            }
-          });
-        }
-      }
-    };
   const changeEnLocale = () => {
-    console.log('Changing locale to English (en-US)');
     setCulture('en-US');
     setCurrencyCode('USD');
     setLocale('en-US');
   };
 
-  const actionComplete = (args: any) => {
-    console.log('Action completed:', args);
-    if (args.requestType === 'beginEdit' || args.requestType === 'add') {
-      console.log('Editing or adding a record');
-      args.form.ej2_instances[0].rules = {};
-      args.dialog.element
-        .querySelector('.e-footer-content')
-        .classList.add('e-hide');
-      setTimeout(() => {
-        const customerIDInput = args.form.elements.namedItem('CustomerID');
-        if (customerIDInput) {
-          console.log('Focusing on CustomerID input');
-          customerIDInput.focus();
-        }
-      }, 0);
+  const actionComplete = async (args: any) => {
+    const { requestType, action, data } = args;
+    if (requestType === 'save') {
+      if (action === 'add') {
+        await addRecord(data);
+      } else if (action === 'edit') {
+        await updateRecord(data);
+      }
+    } else if (requestType === 'delete') {
+      await deleteRecord(data);
+    }
+  };
+
+  const addRecord = async (newData: Material) => {
+    try {
+      const startTime = Date.now();
+      const res = await fetch('/api/materials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newMaterial: newData }),
+      });
+      const endTime = Date.now(); 
+      const duration = endTime - startTime; 
+      if (!res.ok) throw new Error('Failed to add the record');
+
+      setData((prevData) => [...prevData, newData]); 
+      toastInstance.current?.show({
+        title: 'Success',
+        content: `Record added successfully! (Time: ${duration}ms)`,
+        showCloseButton: true,
+        timeOut: 5000, 
+      });
+    } catch (err) {
+      console.error('Error adding record:', err);
+      setError('Failed to add record.');
+    }
+  };
+
+  const updateRecord = async (updatedData: Material) => {
+    try {
+      const startTime = Date.now();
+
+      const res = await fetch('http://localhost:9356/QuaLIS/invoicecustomermaster/updatematerialsdata', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newMaterial: updatedData }),
+      });
+      const endTime = Date.now(); 
+      const duration = endTime - startTime; 
+      if (!res.ok) throw new Error('Failed to update the record');
+      toastInstance.current?.show({
+        title: 'Success',
+        content: `Record Updated successfully! (Time: ${duration}ms)`,
+        showCloseButton: true,
+        timeOut: 3000,
+      });
+      setData((prevData) => prevData.map((item) => (item.nid === updatedData.nid ? updatedData : item))); // Optimistic update
+
+    } catch (err) {
+      console.error('Error updating record:', err);
+      setError('Failed to update record.');
+    }
+  };
+
+  const deleteRecord = async (deletedData: Material | Material[]) => {
+    const dataToDelete = Array.isArray(deletedData) ? deletedData[0] : deletedData;
+
+    try {
+      const startTime = Date.now();
+      const res = await fetch('http://localhost:9356/QuaLIS/invoicecustomermaster/deletematerialsdata', {
+        method: 'POST',  
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newMaterial: { nid: dataToDelete.nid } }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete the record');
+      }
+      const endTime = Date.now(); 
+      const duration = endTime - startTime; 
+      setData((prevData) => prevData.filter((item) => item.nid !== dataToDelete.nid)); 
+      toastInstance.current?.show({
+        title: 'Success',
+        content: `Record Deleted successfully! (Time: ${duration}ms)`,
+        showCloseButton: true,
+        timeOut: 3000,
+      });
+    } catch (err) {
+      console.error('Error deleting record:', err);
+      setError('Failed to delete record.');
+    }
+  };
+  const deleteRow = (nid: string) => {
+    const materialToDelete = data.find(item => item.nid === nid);
+    if (materialToDelete) {
+      deleteRecord(materialToDelete);
     }
   };
 
   return (
     <div>
-    <ButtonComponent locale="fr-FR" cssClass="e-outline" id="frButton" onClick={changeFrLocale}>
-  Change FR Locale
-</ButtonComponent>
 
+       <ToastComponent
+        ref={toastInstance}
+        created={toastCreated}
+      />
+      <ButtonComponent locale="fr-FR" cssClass="e-outline" id="frButton" onClick={changeFrLocale}>
+        Change FR Locale
+      </ButtonComponent>
       <ButtonComponent cssClass="e-outline" id="enButton" style={{ marginLeft: "10px" }} onClick={changeEnLocale}>
         Change EN Locale
       </ButtonComponent>
 
-      {isLoading ? (
-        <div>Loading data...</div>
-      ) : (
-        <GridComponent
-          ref={grid}
-          locale={locale }
-          dataSource={liveData || data}
-          actionComplete={actionComplete}
-          editSettings={editOption}
-          toolbar={toolbarOptions}
-          allowPaging={true}
-          pageSettings={pageSettings}
-          allowSorting={true}
-          allowFiltering={true}
-          filterSettings={filterSettings}
-          height={265}
-          allowPdfExport={true}
-          toolbarClick={toolbarClick}
-          allowExcelExport={true}
-          created={created}
-        >
-          <ColumnsDirective>
-            {columns.map((col, index) => (
-              <ColumnDirective key={index} {...col} />
-            ))}
-          </ColumnsDirective>
-          <Inject services={[Edit, Toolbar, Page, Sort, Filter, PdfExport, ExcelExport]} />
-        </GridComponent>
-      )}
+      <GridComponent
+        ref={grid}
+        locale={locale}
+        dataSource={liveData} 
+        actionComplete={actionComplete}
+        editSettings={editOption}
+        toolbar={toolbarOptions}
+        allowPaging={true}
+        pageSettings={pageSettings}
+        allowSorting={true}
+        allowFiltering={true}
+        allowResizing={true} 
+        filterSettings={filterSettings}
+        height={350}
+        allowPdfExport={true}
+        toolbarClick={toolbarClick}
+        allowExcelExport={true}
+        created={created}
+      >
+
+        <ColumnsDirective>
+          {columns.map((col, index) => (
+            <ColumnDirective
+              key={index}
+              {...col}
+              isPrimaryKey={col.field == 'nuserid'}  
+            />
+          ))}
+          <ColumnDirective
+            field="actions"
+            headerText="Actions"
+            width="200"
+            textAlign="Center"
+            template={(props: Material) => (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                <button
+                  style={{
+                    backgroundColor: 'green',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 10px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                  onClick={() => updateRecord(props)} // Edit button
+                >
+                  <FaRegEdit size={18} />
+                  <span>Edit</span>
+                </button>
+                <button
+                  style={{
+                    backgroundColor: 'red',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 1px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                  onClick={() => deleteRow(props.nid)} // Delete button
+                >
+                  <FaTrashAlt size={18} />
+                  <span>Delete</span>
+                </button>
+
+              </div>
+            )}
+          />
+        </ColumnsDirective>
+        <Inject services={[Edit, Toolbar, Page, Sort, Filter, PdfExport, ExcelExport, Resize]} />
+      </GridComponent>
     </div>
   );
 };
-
-export async function getServerSideProps() {
-  console.log('Fetching initial data from server...');
-  const { data, error } = await supabase.from('materials').select('*');
-  if (error) {
-    console.error('Error fetching initial data:', error);
-    return { notFound: true };
-  }
-
-  const initialData = data.map((item: any) => ({
-    name: item.name,
-    label: item.label,
-    inputType: item.input_type,
-    dataType: item.data_type,
-    gridShow: item.grid_show !== undefined ? item.grid_show : true
-  }));
-
-  console.log('Initial data fetched:', initialData);
-
-  return {
-    props: {
-      initialData
-    }
-  };
-}
 
 export default NormalEdit;

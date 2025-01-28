@@ -17,6 +17,9 @@ const NavBar = () => {
           <Link href="/" passHref>
             <Typography component="a" sx={{ color: 'white' }}>Home</Typography>
           </Link>
+          <Link href="/menu/menus" passHref>
+            <Typography component="a" sx={{ color: 'white' }}>Home screen</Typography>
+          </Link>
           <Link href="/about" passHref>
             <Typography component="a" sx={{ color: 'white' }}>About</Typography>
           </Link>

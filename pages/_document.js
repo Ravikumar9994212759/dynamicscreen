@@ -7,35 +7,7 @@ class MyDocument extends Document {
         <Head>
           {/* Syncfusion CSS styles */}
           <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-grids/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-buttons/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-popups/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-navigations/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-dropdowns/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
             href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-lists/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-inputs/styles/material.css"
-            rel="stylesheet"
-          />
-          <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-calendars/styles/material.css"
             rel="stylesheet"
           />
           <link
@@ -43,17 +15,12 @@ class MyDocument extends Document {
             rel="stylesheet"
           />
           <link
-            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-react-splitbuttons/styles/material.css"
+            href="https://cdn.syncfusion.com/ej2/28.1.33/ej2-layouts/styles/material.css"
             rel="stylesheet"
           />
+          <link href="index.css" rel="stylesheet" />
 
-          {/* Bootstrap CSS */}
-          <link
-            href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-            rel="stylesheet"
-          />
-
-          {/* Loader Styles */}
+          {/* Custom Loader Styles */}
           <style>{`
             #loader {
               color: #008cff;
@@ -65,11 +32,28 @@ class MyDocument extends Document {
               font-size: 20px;
             }
           `}</style>
+
+          {/* External Syncfusion Scripts */}
+          <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.38/system.js"
+            strategy="beforeInteractive"
+          ></script>
+          <script
+            src="/systemjs.config.js"  // Ensure this file is in your public folder
+            strategy="beforeInteractive"
+          ></script>
         </Head>
+
         <body>
-          {/* Add loader to the body */}
-          <div id="loader">Loading....</div>
+          {/* Loader HTML */}
+          {/* <div id="element" style={{ margin: '0 auto', maxWidth: '400px' }}>
+            <div id="loader">Loading....</div>
+          </div> */}
+
+          {/* Render the page content */}
           <Main />
+          
+          {/* Next.js scripts */}
           <NextScript />
         </body>
       </Html>

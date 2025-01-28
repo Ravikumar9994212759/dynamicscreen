@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';  // Import Next.js Head component
 import '../styles/globals.css'; // Your global styles
 import Layout from './../components/Layout'; // Assuming this is your layout component
 
@@ -13,8 +14,7 @@ import '@syncfusion/ej2-navigations/styles/material.css';
 import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-splitbuttons/styles/material.css';
 import '@syncfusion/ej2-react-grids/styles/material.css';
-
-
+import '@syncfusion/ej2-react-lists/styles/material.css'; // Add the style for ListView
 
 // Syncfusion Localization
 import { L10n, setCulture, setCurrencyCode, loadCldr } from '@syncfusion/ej2-base';
@@ -82,24 +82,34 @@ function MyApp({ Component, pageProps }) {
   }, [router]);
 
   return (
-    <Layout>
-      {/* Loader element */}
-      <div
-        id="loader"
-        style={{
-          display: 'none',
-          position: 'fixed',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-        }}
-      >
-        Loading...
-      </div>
+    <>
+      <Head>
+        {/* Meta Tags */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta charSet="utf-8" />
+        <meta name="description" content="Essential JS 2 for React Components" />
+        <meta name="author" content="Syncfusion" />
+      </Head>
 
-      {/* Main content */}
-      <Component {...pageProps} />
-    </Layout>
+      <Layout>
+        {/* Loader element */}
+        <div
+          id="loader"
+          style={{
+            display: 'none',
+            position: 'fixed',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          Loading1...
+        </div>
+
+        {/* Main content */}
+        <Component {...pageProps} />
+      </Layout>
+    </>
   );
 }
 
