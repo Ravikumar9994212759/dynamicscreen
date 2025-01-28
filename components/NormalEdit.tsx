@@ -112,7 +112,7 @@ const NormalEdit: React.FC<NormalEditProps> = ({ initialData, form2 }) => {
         predicate: 'or',
       }));
     }
-  }, [filterValues]);
+  }, [filterValues, filterSettings]);
 
   useEffect(() => {
     if (initialData.length > 0) {
