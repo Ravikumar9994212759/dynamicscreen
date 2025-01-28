@@ -49,22 +49,24 @@ export async function getStaticProps() {
     // });
     
     //  Data Grid component
-    const gridRes = await fetch("http://localhost:9356/QuaLIS/invoicecustomermaster/getinventorymaster", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestData: { field1: "value1", field2: "value2" } }),
-    });
+    // const gridRes = await fetch("http://localhost:9356/QuaLIS/invoicecustomermaster/getinventorymaster", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ requestData: { field1: "value1", field2: "value2" } }),
+    // });
+    let { data: materials } = await supabase.from('materials')
+  .select('*')
 
     //const menuData = menuRes.ok ? await menuRes.json() : [];
    // const listData = listRes.ok ? await listRes.json() : [];
-    const gridData = gridRes.ok ? await gridRes.json() : { form1: [], form2: [] };
+    //const gridData = gridRes.ok ? await gridRes.json() : { form1: [], form2: [] };
 
     return {
       props: {
         menuDataSource: data || [],
         //menuDataSource: Array.isArray(menuData) ? menuData : [],
         //initialDataSource: Array.isArray(listData) ? listData : [],
-        initialData: gridData.form1 || [],
+        initialData: materials || [],
         form2: gridData.form2 || [],
       },
      // revalidate: 10, 
