@@ -36,7 +36,11 @@ export async function getStaticProps() {
     .select(`nprimarykey, screename, jsondata->menuUrl AS menuURL, jsondata->parentMenuId AS parentMenuID, nstatus`)
     .order('nprimarykey', { ascending: true });
 
-
+    if (error) {
+      console.error("Error fetching data from Supabase:", error);
+    } else {
+      console.log("Successfully fetched data from Supabase:", JSON.stringify(data, null, 2));
+    }
     // ListView component
     // const listRes = await fetch("http://localhost:9356/QuaLIS/invoicecustomermaster/getlistview", {
     //   method: "POST",
